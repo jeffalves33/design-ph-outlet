@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 
 import { useState, type ReactNode } from "react";
-const logoOutlet = "public/ph_outlet.png";
-const logoKids = "public/ph_kids.png";
+const logoOutlet = "/ph_outlet.png";
+const logoKids = "/ph_kids.png";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { LOJAS, diasParaAniversario, nomeLoja } from "@/lib/mock-data";
