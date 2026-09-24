@@ -80,35 +80,13 @@ function Login() {
         </div>
 
         <div className="relative my-auto max-w-lg py-16">
-          <span className="inline-flex items-center gap-2 rounded-full border border-sidebar-border bg-sidebar-accent px-3 py-1.5 text-xs text-sidebar-foreground/75">
-            <ShieldCheck className="size-3.5 text-brand" /> Área segura da equipe
-          </span>
           <h1 className="mt-6 font-display text-4xl leading-tight font-semibold tracking-tight xl:text-5xl">
-            Cada venda conta.
-            <br />
-            Cada meta aproxima.
+            Design Teste
           </h1>
           <p className="mt-5 max-w-md text-sm leading-6 text-sidebar-foreground/60">
-            A equipe acompanha seus resultados com clareza, enquanto a administração mantém acessos
-            e metas organizados em um só lugar.
+            Portal da Equipe e Administrador.
           </p>
 
-          <div className="mt-10 grid max-w-md grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-sidebar-border bg-sidebar-accent/70 p-4">
-              <Target className="size-5 text-brand" />
-              <p className="mt-4 text-sm font-medium">Meta sempre visível</p>
-              <p className="mt-1 text-xs leading-5 text-sidebar-foreground/50">
-                Progresso atualizado pelas vendas vinculadas.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-sidebar-border bg-sidebar-accent/70 p-4">
-              <LockKeyhole className="size-5 text-brand" />
-              <p className="mt-4 text-sm font-medium">Acesso por perfil</p>
-              <p className="mt-1 text-xs leading-5 text-sidebar-foreground/50">
-                Cada pessoa vê somente o que precisa.
-              </p>
-            </div>
-          </div>
         </div>
 
         <p className="relative text-xs text-sidebar-foreground/35">
