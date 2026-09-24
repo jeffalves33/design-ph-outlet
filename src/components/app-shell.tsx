@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
   Boxes,
@@ -6,11 +6,13 @@ import {
   Check,
   ChevronsUpDown,
   LayoutDashboard,
+  LogOut,
   Menu,
   PackageSearch,
   ShoppingBag,
   Sparkles,
   TrendingUp,
+  Target,
   Users,
   UsersRound,
   Wallet,
@@ -26,7 +28,14 @@ import { LOJAS, diasParaAniversario, nomeLoja } from "@/lib/mock-data";
 import { porEscopo, useStore, type Escopo } from "@/lib/store";
 
 type NavItem = {
-  to: "/" | "/vendas" | "/estoque" | "/financeiro" | "/clientes" | "/colaboradores";
+  to:
+    | "/"
+    | "/vendas"
+    | "/estoque"
+    | "/financeiro"
+    | "/clientes"
+    | "/colaboradores"
+    | "/meu-desempenho";
   label: string;
   short: string;
   icon: LucideIcon;
@@ -39,7 +48,16 @@ const nav: NavItem[] = [
   { to: "/estoque", label: "Estoque", short: "Estoque", icon: Boxes },
   { to: "/financeiro", label: "Financeiro", short: "Caixa", icon: Wallet },
   { to: "/clientes", label: "CRM", short: "CRM", icon: Users },
-  { to: "/colaboradores", label: "Colaboradores", short: "Equipe", icon: UsersRound },
+  { to: "/colaboradores", label: "Funcionários", short: "Equipe", icon: UsersRound },
+];
+
+const navFuncionario: NavItem[] = [
+  {
+    to: "/meu-desempenho",
+    label: "Meu desempenho",
+    short: "Minha meta",
+    icon: Target,
+  },
 ];
 
 const escopos: { id: Escopo; label: string }[] = [
@@ -99,7 +117,13 @@ export function AppShell({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
-  const { escopo, setEscopo, usuario } = useStore();
+  const { escopo, setEscopo, usuario, sessaoAtiva, sair } = useStore();
+  const administrador = usuario.cargo === "Administrador";
+
+  if (!sessaoAtiva) return <Navigate to="/login" replace />;
+  if (!administrador && pathname !== "/meu-desempenho") {
+    return <Navigate to="/meu-desempenho" replace />;
+  }
 
   const isActive = (to: string, exact?: boolean) =>
     exact ? pathname === to : pathname.startsWith(to);
@@ -109,7 +133,7 @@ export function AppShell({
 
   const NavLinks = ({ onNavigate }: { onNavigate?: () => void }) => (
     <nav className="flex flex-col gap-1">
-      {nav.map((item) => {
+      {(administrador ? nav : navFuncionario).map((item) => {
         const active = isActive(item.to, item.exact);
         return (
           <Link
@@ -155,9 +179,22 @@ export function AppShell({
         <div className="mt-6 mb-4 rule-brand" />
         <NavLinks />
         <div className="mt-auto rounded-2xl bg-sidebar-accent p-3.5">
-          <p className="eyebrow text-sidebar-foreground/50">Sessão</p>
-          <p className="mt-1 truncate text-sm font-medium">{usuario.nome}</p>
-          <p className="truncate text-xs text-sidebar-foreground/60">{usuario.cargo}</p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="eyebrow text-sidebar-foreground/50">Sessão</p>
+              <p className="mt-1 truncate text-sm font-medium">{usuario.nome}</p>
+              <p className="truncate text-xs text-sidebar-foreground/60">{usuario.cargo}</p>
+            </div>
+            <button
+              type="button"
+              onClick={sair}
+              className="grid size-8 shrink-0 place-items-center rounded-lg text-sidebar-foreground/60 transition-colors hover:bg-sidebar/60 hover:text-sidebar-foreground"
+              aria-label="Sair da conta"
+              title="Sair da conta"
+            >
+              <LogOut className="size-4" />
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -184,15 +221,38 @@ export function AppShell({
             </Sheet>
 
             <div className="min-w-0 flex-1">
-              <SeletorLoja escopo={escopo} onChange={setEscopo} />
+              {administrador ? (
+                <SeletorLoja escopo={escopo} onChange={setEscopo} />
+              ) : (
+                <div className="flex items-center gap-2.5">
+                  <MarcaEscopo escopo={usuario.lojas[0] ?? "outlet"} size={30} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[0.8rem] font-medium leading-tight">
+                      {usuario.lojas.map(nomeLoja).join(" · ")}
+                    </span>
+                    <span className="hidden text-[10px] tracking-wide text-muted-foreground uppercase sm:block">
+                      Meu acesso
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
 
-            <Notificacoes />
+            {administrador && <Notificacoes />}
 
             <span className="hidden items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs text-secondary-foreground sm:flex">
               <span className="size-1.5 rounded-full bg-brand" />
               {usuario.nome.split(" ")[0]} · {usuario.cargo.toLowerCase()}
             </span>
+
+            <button
+              type="button"
+              onClick={sair}
+              className="grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:hidden"
+              aria-label="Sair da conta"
+            >
+              <LogOut className="size-[18px]" />
+            </button>
           </div>
         </header>
 

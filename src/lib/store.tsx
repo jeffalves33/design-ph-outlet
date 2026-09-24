@@ -32,6 +32,9 @@ type Store = {
   despesas: Despesa[];
   colaboradores: Colaborador[];
   usuario: Colaborador;
+  sessaoAtiva: boolean;
+  autenticar: (login: string, senha: string) => "ok" | "invalido" | "bloqueado";
+  sair: () => void;
   ajustarEstoque: (id: string, delta: number) => void;
   addProduto: (p: Omit<Produto, "id">) => void;
   addCliente: (c: Omit<Cliente, "id" | "desde">) => string;
@@ -46,6 +49,13 @@ type Store = {
 const StoreContext = createContext<Store | null>(null);
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+const CHAVE_SESSAO = "ph-outlet-sessao";
+
+const lerSessao = () => {
+  if (typeof window === "undefined") return null;
+  const id = window.sessionStorage.getItem(CHAVE_SESSAO);
+  return seed.colaboradores.some((c) => c.id === id && c.ativo) ? id : null;
+};
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [escopo, setEscopo] = useState<Escopo>("todas");
@@ -54,9 +64,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [vendas, setVendas] = useState<Venda[]>(seed.vendas);
   const [despesas, setDespesas] = useState<Despesa[]>(seed.despesas);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>(seed.colaboradores);
+  const [usuarioId, setUsuarioId] = useState(() => lerSessao() ?? seed.colaboradores[0]!.id);
+  const [sessaoAtiva, setSessaoAtiva] = useState(() => lerSessao() !== null);
 
   const value = useMemo<Store>(() => {
-    const usuario = colaboradores[0]!;
+    const usuario = colaboradores.find((c) => c.id === usuarioId) ?? colaboradores[0]!;
     return {
       escopo,
       setEscopo,
@@ -66,6 +78,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       despesas,
       colaboradores,
       usuario,
+      sessaoAtiva,
+      autenticar: (login, senha) => {
+        const conta = colaboradores.find(
+          (c) => c.login.toLowerCase() === login.trim().toLowerCase() && c.senha === senha,
+        );
+        if (!conta) return "invalido";
+        if (!conta.ativo) return "bloqueado";
+        window.sessionStorage.setItem(CHAVE_SESSAO, conta.id);
+        setUsuarioId(conta.id);
+        setSessaoAtiva(true);
+        return "ok";
+      },
+      sair: () => {
+        window.sessionStorage.removeItem(CHAVE_SESSAO);
+        setSessaoAtiva(false);
+      },
       ajustarEstoque: (id, delta) =>
         setProdutos((prev) =>
           prev.map((p) =>
@@ -103,7 +131,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         id ? (clientes.find((c) => c.id === id)?.nome ?? "—") : (avulso ?? "Não identificado"),
       nomeColaborador: (id) => colaboradores.find((c) => c.id === id)?.nome ?? "—",
     };
-  }, [escopo, produtos, clientes, vendas, despesas, colaboradores]);
+  }, [escopo, produtos, clientes, vendas, despesas, colaboradores, usuarioId, sessaoAtiva]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

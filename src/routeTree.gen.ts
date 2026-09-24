@@ -14,6 +14,8 @@ import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ColaboradoresRouteImport } from './routes/colaboradores'
 import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MeuDesempenhoRouteImport } from './routes/meu-desempenho'
 import { Route as VendasRouteImport } from './routes/vendas'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +43,16 @@ const FinanceiroRoute = FinanceiroRouteImport.update({
   path: '/financeiro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeuDesempenhoRoute = MeuDesempenhoRouteImport.update({
+  id: '/meu-desempenho',
+  path: '/meu-desempenho',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VendasRoute = VendasRouteImport.update({
   id: '/vendas',
   path: '/vendas',
@@ -53,6 +65,8 @@ export interface FileRoutesByFullPath {
   '/colaboradores': typeof ColaboradoresRoute
   '/estoque': typeof EstoqueRoute
   '/financeiro': typeof FinanceiroRoute
+  '/login': typeof LoginRoute
+  '/meu-desempenho': typeof MeuDesempenhoRoute
   '/vendas': typeof VendasRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +75,8 @@ export interface FileRoutesByTo {
   '/colaboradores': typeof ColaboradoresRoute
   '/estoque': typeof EstoqueRoute
   '/financeiro': typeof FinanceiroRoute
+  '/login': typeof LoginRoute
+  '/meu-desempenho': typeof MeuDesempenhoRoute
   '/vendas': typeof VendasRoute
 }
 export interface FileRoutesById {
@@ -70,6 +86,8 @@ export interface FileRoutesById {
   '/colaboradores': typeof ColaboradoresRoute
   '/estoque': typeof EstoqueRoute
   '/financeiro': typeof FinanceiroRoute
+  '/login': typeof LoginRoute
+  '/meu-desempenho': typeof MeuDesempenhoRoute
   '/vendas': typeof VendasRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +98,8 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/estoque'
     | '/financeiro'
+    | '/login'
+    | '/meu-desempenho'
     | '/vendas'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +108,8 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/estoque'
     | '/financeiro'
+    | '/login'
+    | '/meu-desempenho'
     | '/vendas'
   id:
     | '__root__'
@@ -96,6 +118,8 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/estoque'
     | '/financeiro'
+    | '/login'
+    | '/meu-desempenho'
     | '/vendas'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +129,8 @@ export interface RootRouteChildren {
   ColaboradoresRoute: typeof ColaboradoresRoute
   EstoqueRoute: typeof EstoqueRoute
   FinanceiroRoute: typeof FinanceiroRoute
+  LoginRoute: typeof LoginRoute
+  MeuDesempenhoRoute: typeof MeuDesempenhoRoute
   VendasRoute: typeof VendasRoute
 }
 
@@ -145,6 +171,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meu-desempenho': {
+      id: '/meu-desempenho'
+      path: '/meu-desempenho'
+      fullPath: '/meu-desempenho'
+      preLoaderRoute: typeof MeuDesempenhoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vendas': {
       id: '/vendas'
       path: '/vendas'
@@ -161,6 +201,8 @@ const rootRouteChildren: RootRouteChildren = {
   ColaboradoresRoute: ColaboradoresRoute,
   EstoqueRoute: EstoqueRoute,
   FinanceiroRoute: FinanceiroRoute,
+  LoginRoute: LoginRoute,
+  MeuDesempenhoRoute: MeuDesempenhoRoute,
   VendasRoute: VendasRoute,
 }
 export const routeTree = rootRouteImport

@@ -36,9 +36,11 @@ export type Colaborador = {
   nome: string;
   login: string;
   senha: string;
+  telefone: string;
   cargo: "Administrador" | "Gerente" | "Vendedor" | "Estoquista";
   lojas: Loja[];
   ativo: boolean;
+  metaMensal: number;
   desde: string;
 };
 
@@ -99,11 +101,11 @@ export const produtos: Produto[] = [
 ];
 
 export const colaboradores: Colaborador[] = [
-  { id: "u1", nome: "Paulo Henrique", login: "paulo@phoutlet.com", senha: "ph-admin-2026", cargo: "Administrador", lojas: ["outlet", "kids"], ativo: true, desde: "2022-03-01" },
-  { id: "u2", nome: "Camila Duarte", login: "camila@phoutlet.com", senha: "camila2026", cargo: "Gerente", lojas: ["outlet"], ativo: true, desde: "2023-07-14" },
-  { id: "u3", nome: "Rafael Lima", login: "rafael@phoutlet.com", senha: "rafael2026", cargo: "Vendedor", lojas: ["outlet"], ativo: true, desde: "2024-02-05" },
-  { id: "u4", nome: "Beatriz Souza", login: "beatriz@phkids.com", senha: "bia2026", cargo: "Vendedor", lojas: ["kids"], ativo: true, desde: "2024-09-19" },
-  { id: "u5", nome: "Tiago Moraes", login: "tiago@phoutlet.com", senha: "tiago2026", cargo: "Estoquista", lojas: ["outlet", "kids"], ativo: false, desde: "2023-01-23" },
+  { id: "u1", nome: "Paulo Henrique", login: "paulo@phoutlet.com", senha: "ph-admin-2026", telefone: "(27) 99912-4801", cargo: "Administrador", lojas: ["outlet", "kids"], ativo: true, metaMensal: 0, desde: "2022-03-01" },
+  { id: "u2", nome: "Camila Duarte", login: "camila@phoutlet.com", senha: "camila2026", telefone: "(27) 99844-1207", cargo: "Gerente", lojas: ["outlet"], ativo: true, metaMensal: 8000, desde: "2023-07-14" },
+  { id: "u3", nome: "Rafael Lima", login: "rafael@phoutlet.com", senha: "rafael2026", telefone: "(27) 99722-6631", cargo: "Vendedor", lojas: ["outlet"], ativo: true, metaMensal: 9500, desde: "2024-02-05" },
+  { id: "u4", nome: "Beatriz Souza", login: "beatriz@phkids.com", senha: "bia2026", telefone: "(27) 99218-0744", cargo: "Vendedor", lojas: ["kids"], ativo: true, metaMensal: 8500, desde: "2024-09-19" },
+  { id: "u5", nome: "Tiago Moraes", login: "tiago@phoutlet.com", senha: "tiago2026", telefone: "(27) 99657-3209", cargo: "Estoquista", lojas: ["outlet", "kids"], ativo: false, metaMensal: 0, desde: "2023-01-23" },
 ];
 
 export const clientes: Cliente[] = [
