@@ -11,7 +11,7 @@ Alvo Node 22.x. Dependências Next 16.4.0, React 19.2.8 e Tailwind 4.3.3 pinadas
 - `npm run check` — typecheck, lint, testes unitários locais e build.
 - `npm run build` e `npm run preview -- --hostname 127.0.0.1` — build e prévia local de produção.
 
-Saída Next em `.next-p1/`, isolada do cache da tentativa anterior. Nenhum desses comandos aplica migrations.
+Saída Next no diretório padrão `.next/`, compatível com a integração Next.js da Vercel. Nenhum desses comandos aplica migrations.
 
 ## Estrutura e limites
 

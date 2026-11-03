@@ -8,7 +8,6 @@ export default tseslint.config(
     ignores: [
       ".audit/**",
       ".next/**",
-      ".next-p1/**",
       "node_modules/**",
       "dist/**",
       ".output/**",
