@@ -8,6 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.audit/
+.next/
+.next-p1/
+.npm-cache/
+*.tsbuildinfo
 dist
 dist-ssr
 .output
@@ -30,3 +35,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment
+.env

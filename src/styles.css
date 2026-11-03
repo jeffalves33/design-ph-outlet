@@ -193,3 +193,105 @@
     transparent
   );
 }
+
+.etiqueta-fisica {
+  width: 50mm;
+  height: 30mm;
+  overflow: hidden;
+  border: 1px dashed rgb(148 163 184);
+  border-radius: 2mm;
+}
+
+.area-impressao {
+  display: none;
+}
+
+.comprovante-fisico {
+  box-sizing: border-box;
+  width: 80mm;
+  min-height: 80mm;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .area-impressao,
+  .area-impressao * {
+    visibility: visible !important;
+  }
+
+  .area-impressao {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: white;
+  }
+
+  .pagina-etiquetas {
+    box-sizing: border-box;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .pagina-etiquetas:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .formato-termica .pagina-etiquetas {
+    page: etiqueta-termica;
+    width: 50mm;
+    height: 30mm;
+    padding: 0;
+  }
+
+  .formato-termica .etiqueta-fisica {
+    padding: calc(2mm + var(--margem-etiquetas));
+  }
+
+  .formato-a4 .pagina-etiquetas {
+    page: etiquetas-a4;
+    display: grid;
+    width: 210mm;
+    min-height: 297mm;
+    grid-template-columns: repeat(3, 50mm);
+    grid-auto-rows: 30mm;
+    align-content: start;
+    justify-content: center;
+    gap: var(--margem-etiquetas);
+    padding: var(--margem-etiquetas);
+  }
+
+  .etiqueta-fisica {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .area-comprovante {
+    width: 80mm;
+  }
+
+  .area-comprovante .comprovante-fisico {
+    page: comprovante-termico;
+    width: 80mm;
+    min-height: 0;
+    box-shadow: none;
+  }
+
+  @page etiqueta-termica {
+    size: 50mm 30mm;
+    margin: 0;
+  }
+
+  @page etiquetas-a4 {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  @page comprovante-termico {
+    size: 80mm auto;
+    margin: 0;
+  }
+}

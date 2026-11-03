@@ -6,12 +6,14 @@ export function StatCard({
   hint,
   icon: Icon,
   tone = "default",
+  unavailable = false,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon: LucideIcon;
   tone?: "default" | "brand" | "success" | "warning" | "danger";
+  unavailable?: boolean;
 }) {
   const tones = {
     default: "bg-secondary text-foreground",
@@ -34,14 +36,13 @@ export function StatCard({
         </span>
       </div>
       <p className="mt-2.5 font-display text-[1.05rem] leading-none font-semibold tabular-nums sm:mt-3 sm:text-2xl">
-        {value}
+        {unavailable ? "—" : value}
       </p>
       {hint && (
         <p className="mt-1.5 text-[0.72rem] leading-snug text-muted-foreground sm:mt-2 sm:text-xs">
-          {hint}
+          {unavailable ? "Dados indisponíveis" : hint}
         </p>
       )}
     </div>
   );
 }
-
