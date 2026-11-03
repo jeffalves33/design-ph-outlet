@@ -1,6 +1,6 @@
 # Governança — PH Outlet
 
-Status: construção validada até P6.4. P6.5 está integralmente implementado e validado localmente, com handoff Cognito administrativo registrado e migration aplicada; aguarda aceite explícito do responsável. P7 continua adiado, não iniciado e sem autorização; o ExecPlan é a fonte do estado por bloco.
+Status: P0–P7 concluídos. Extensão P8.1 PWA concluída e validada localmente em 2026-11-03, aguardando aceite e autorização separada para publicação; o ExecPlan é a fonte do estado por bloco.
 
 ## Ordem de leitura do executor
 

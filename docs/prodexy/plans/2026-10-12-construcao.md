@@ -2,7 +2,7 @@
 
 ## Status
 
-IN_PROGRESS — construção validada até P6.4. P6.5 está integralmente implementado e validado localmente: seletor único, notificações persistentes e gestão de funcionários com Cognito administrativo. A migration `202611030001_notificacoes_funcionarios.sql` foi aplicada manualmente com pós-check informado pelo responsável. P6.5 aguarda aceite do responsável; P7 continua adiado, não iniciado e sem autorização.
+IN_PROGRESS — P0–P7 concluídos conforme registros anteriores. P8.1 foi autorizado em 2026-11-03 para tornar o sistema uma PWA instalável em desktop e mobile; implementação e validação local concluídas, aguardando aceite explícito e autorização separada para publicar a nova revisão.
 
 ## Standard version
 
@@ -78,7 +78,9 @@ Roteiro de negócio: **base visual** → **banco e acesso de usuários** (agora)
 | **P6.2 — revisão final das jornadas/UI** | Aceito pelo responsável em 2026-10-27; exceção explícita registrada para as verificações autenticada e física não executadas pelo agente | Nada neste bloco; a exceção não libera deploy nem substitui homologação real de P2.5. |
 | **P6.3 — bloqueios críticos do backend** | Aceito pelo responsável em 2026-10-29; 112/112 testes passaram, incluindo 5 checks focados de segurança | Nada neste bloco. |
 | **P6.4 — conciliação de banco e runbook** | Validado integralmente pelo responsável em 2026-11-03; cinco migrations/hashes conciliados com schema de 15 tabelas e 16 índices | Construção local encerrada; P7 adiado e sem autorização. |
-| **P6.5 — seletor, notificações e funcionários** | Implementação local concluída; handoff Cognito administrativo registrado, migration aplicada e 127/127 testes aprovados | Aceite explícito do responsável. P7 permanece adiado e não autorizado. |
+| **P6.5 — seletor, notificações e funcionários** | Implementação local concluída, 127/127 testes aprovados e aceite explícito do responsável recebido em 2026-11-03 | Nada neste bloco. |
+| **P7 — entrega operacional e publicação** | Responsável declarou P7.1–P7.3 integralmente executados e concluídos manualmente em 2026-11-03 | Nenhum trabalho atual; nova alteração exige novo bloco autorizado. |
+| **P8.1 — PWA instalável** | Manifesto, ícones, service worker seguro, instalação desktop/mobile, atualização controlada e fallback offline concluídos localmente; 130/130 testes | Aceite explícito do responsável e, depois, autorização separada para publicar a revisão. |
 
 Em linguagem simples: **P2.4** é o código que permite ao servidor Vercel conversar com o PostgreSQL com certificado conferido e poucas conexões simultâneas; não cria outro servidor nem camada de conectividade com mensalidade fixa. **P2.5** é o login real: o Cognito verifica a identidade e o banco PH informa se a pessoa está ativa e a quais lojas pertence. O App Client é a configuração do Cognito que identifica este projeto; não é uma nova plataforma de hospedagem. **P2.6** define o que admin e vendedor podem fazer depois do login. Esses controles são necessários, mas devem ser descritos ao responsável pelo resultado, não pela implementação interna.
 
@@ -286,7 +288,7 @@ Gate físico decidido pelo responsável em 2026-10-25: modelo/papel da impressor
 - [ ] P4.5 Homologar entrada → etiquetas → leitor → venda → saldo → comprovante no equipamento real. Falha/cancelamento da impressão não repete venda.
   - [x] Jornada local integrada em banco sintético isolado: saldo zero, entrada de duas peças, preparação de etiqueta sem escrita, leitura do código `00001`, venda de uma peça, saldo final um e comprovante reconstruído da venda persistida.
   - [x] Reenvio da mesma venda retorna o resultado idempotente; duas consultas/reimpressões do comprovante não criam venda, item, movimento ou nova baixa. Typecheck, lint completo, 78/78 testes unitários e `git diff --check` passaram.
-  - [ ] Homologação real pendente por decisão do responsável: conferir etiqueta e leitura físicas, imprimir comprovante no modelo/papel escolhidos e observar cancelamento/falha do diálogo sem repetir a venda. Sem escrita no banco PH nesta prova local.
+  - [x] Homologação física foi originalmente adiada neste marco e posteriormente declarada concluída manualmente pelo responsável dentro de P7 em 2026-11-03.
   - [x] Aceite local de P4.5 e autorização de P5.1 recebidos em 2026-10-25: “use um modelo padrão, depois volto e modifico se for o caso. continue!”. Referências provisórias registradas em D07/RN05/RN12; não equivalem a teste físico.
 
 Aceite: jornada UC03–07, segurança e concorrência comprovadas; hardware testado por R. Rollback: impedir nova confirmação no fluxo defeituoso, reconciliar operação pela chave; falha de impressão usa reimpressão, não estorno automático.
@@ -356,7 +358,7 @@ Dependências: todos os módulos incluídos concluídos.
   - [x] Comentário obsoleto no `schema.sql` sobre P5.2 pendente foi corrigido sem alterar DDL; runbook consolidado com ledger esperado e bloqueios concretos de release.
   - [x] Replay descartável não foi executado porque não foi autorizado e seria duplicação sem ambiente provisionado. Typecheck, lint, 116/116 testes e `git diff --check` passaram; `tests/conciliacao-p64.test.mjs` fixa paridade e hashes.
   - [x] Validação integral do responsável recebida para P6.4 em 2026-11-03.
-  - [ ] P7.1 identificado, porém explicitamente adiado e não autorizado pelo responsável em 2026-11-03.
+  - [x] P7.1 foi identificado e adiado neste marco; a decisão histórica foi posteriormente superada pela conclusão manual integral de P7 declarada pelo responsável em 2026-11-03.
 
 Aceite: testes do CASOS-DE-USO evidenciados, sem bloqueios ocultos. Rollback: voltar ao marco afetado; não reduzir testes para pintar verde.
 
@@ -370,21 +372,36 @@ Aceite: testes do CASOS-DE-USO evidenciados, sem bloqueios ocultos. Rollback: vo
 - [x] Gate Auth concluído conforme handoff informado pelo responsável em 2026-11-03: identidade server-side de menor privilégio, limitada ao User Pool PH e às sete ações administrativas aprovadas; credenciais configuradas privadamente na Vercel e não lidas pelo executor.
 - [x] Após migration e handoff Auth: lista, criação idempotente, edição, ativação/bloqueio, revogação global, vínculos de loja e convite temporário Cognito na aba Funcionários; metas permanecem como submódulo da equipe. Administrador inicial é protegido e novos perfis são somente vendedores.
 - [x] Validação local: cadeia padrão do AWS SDK sem credenciais explícitas, comandos Cognito simulados, falha sanitizada, compensação restrita à criação incompleta, autorização server-side, proteção de origem, domínio e UI; typecheck, lint, 127/127 testes e `git diff --check` aprovados.
-- [ ] Validação explícita do responsável para P6.5.
+- [x] Validação explícita do responsável para P6.5 recebida em 2026-11-03.
 
-Gate atual: P6.5 concluído localmente e parado para aceite do responsável. Nenhuma conta real foi criada pelo executor e não houve chamada AWS, deploy ou P7.
+Gate encerrado: P6.5 aceito pelo responsável em 2026-11-03.
 
 ### P7 — Entrega operacional e publicação autorizada (R + C)
 
 Dependências: P6; autorização específica de release.
 
-Status: **ADIADO — NÃO INICIADO — SEM AUTORIZAÇÃO**. As pendências abaixo permanecem documentadas apenas para uma futura solicitação de release. Não executar backup, restauração, Vercel, Cognito, domínio, deploy ou homologação pós-deploy agora.
+Status: **CONCLUÍDO MANUALMENTE PELO RESPONSÁVEL EM 2026-11-03**. O responsável informou ter executado integralmente todas as atividades abaixo. O executor apenas registra essa declaração: não repetiu backup/restauração, configuração, publicação ou homologação e não afirma verificação independente.
 
-- [ ] P7.1 Confirmar backup do database incluído, restauração lógica autorizada em destino temporário seguro, TLS/renovação, contatos, limites e ambiente de produção sem fixtures; sem nova EC2.
-- [ ] P7.2 R aplica pendências de migration, configura Vercel/Cognito/domínio e publica versão identificada; C verifica resultado autorizado sem alegar deploy por build local. Validação pós-deploy de login, venda, estoque, etiquetas, térmica, metas e bloqueios com dados de homologação autorizados.
-- [ ] P7.3 Registrar aceite do responsável, revisão publicada, migrations aplicadas, evidências, pendências aceitas e handoff operacional. Encerrar plano DONE somente dentro do escopo realmente entregue; se release aguarda R, manter pendência explícita.
+- [x] P7.1 Backup, restauração, TLS/renovação, contatos, limites e ambiente de produção confirmados manualmente pelo responsável.
+- [x] P7.2 Migrations/configuração Vercel-Cognito-domínio, publicação identificada e homologação pós-deploy concluídas manualmente pelo responsável.
+- [x] P7.3 Aceite, revisão publicada, migrations, evidências, pendências aceitas e handoff operacional concluídos manualmente pelo responsável.
 
 Rollback: revisão Vercel compatível e procedimento do runbook; dados corrigidos/recuperados somente por R autorizado. Não agendar desligamento noturno.
+
+### P8.1 — PWA instalável para desktop e mobile (C + R)
+
+- [x] Bloco autorizado pelo responsável em 2026-11-03.
+- [x] Manifesto completado com identidade, modo `standalone`, atalhos de desempenho/venda, categorias e ícones reais 192×192, 512×512 e maskable derivados da marca existente.
+- [x] Metadados Next/iOS configurados para instalação, status bar, viewport seguro e aparência consistente em desktop, Android e iPhone/iPad.
+- [x] Service worker versionado registra e atualiza a aplicação; apenas arquivos públicos e bundles estáticos podem entrar no cache. APIs, respostas autenticadas, páginas operacionais e qualquer mutação nunca são armazenadas.
+- [x] Falta de rede mostra página explícita de indisponibilidade e não simula venda, estoque ou outra operação offline.
+- [x] Botão de instalação aparece quando suportado; Chrome/Edge/Android usam o prompt nativo e iOS orienta `Compartilhar` → `Adicionar à Tela de Início`.
+- [x] Atualizações aguardam confirmação do usuário antes de ativar/recarregar.
+- [x] Validação local: typecheck, lint, 130/130 testes e `git diff --check` aprovados. Build não executado porque o Next carregaria o `.env` privado.
+- [ ] Validação explícita do responsável para P8.1.
+- [ ] Publicação da revisão PWA somente após autorização específica; nenhum deploy foi executado neste bloco.
+
+Gate atual: P8.1 concluído localmente e parado para aceite. A instalação PWA só ficará disponível no domínio publicado após novo deploy autorizado.
 
 ## Migrations e dados
 
@@ -428,9 +445,13 @@ Contratos nos arquivos locais referenciados; progresso somente aqui. AGENTS apro
 
 ## Decisões em aberto
 
-[D01–D11](../../planejamento/DECISOES-PENDENTES.md) são a fonte das decisões de negócio. Código, preço e estoque próprios por loja+nome+tamanho, comprovante não fiscal, ausência de detalhes de pagamento/reversões e fórmula das metas já foram definidos. D04 fixa loja, datas civis e histórico; D05/D07 são perguntas somente dos respectivos fluxos; D08 inclui CRM/clientes, despesas e financeiro na V1 com contrato confirmado. O handoff P2.2 e P2.4 foram validados; a migration P2.3 foi aplicada e conferida, mas o aceite formal desse bloco não foi registrado. P2.5 teve entregas locais de sessão aceitas, inclusive a janela até 400 dias por emissão. O App Client Cognito PH tem validade de refresh de 3.650 dias conforme confirmação do responsável; o cookie local nunca ultrapassa o vencimento absoluto. P2.6, P3.1–P3.3, P4.1–P4.5, P5.1–P5.2 e P6.1–P6.4 foram aceitos. As seis migrations foram aplicadas manualmente conforme pós-checks informados pelo responsável. Homologações reais, equipamentos e publicação são pendências futuras de release documentadas no runbook; não constituem trabalho atual. P7 está adiado, não iniciado e sem autorização.
+[D01–D11](../../planejamento/DECISOES-PENDENTES.md) são a fonte das decisões de negócio. Código, preço e estoque próprios por loja+nome+tamanho, comprovante não fiscal, ausência de detalhes de pagamento/reversões e fórmula das metas já foram definidos. D04 fixa loja, datas civis e histórico; D05/D07 são perguntas somente dos respectivos fluxos; D08 inclui CRM/clientes, despesas e financeiro na V1 com contrato confirmado. O handoff P2.2 e P2.4 foram validados; a migration P2.3 foi aplicada e conferida, mas o aceite formal desse bloco não foi registrado. P2.5 teve entregas locais de sessão aceitas, inclusive a janela até 400 dias por emissão. O App Client Cognito PH tem validade de refresh de 3.650 dias conforme confirmação do responsável; o cookie local nunca ultrapassa o vencimento absoluto. P2.6, P3.1–P3.3, P4.1–P4.5, P5.1–P5.2 e P6.1–P6.5 foram aceitos. As seis migrations foram aplicadas manualmente conforme pós-checks informados pelo responsável. P7.1–P7.3 foram declarados integralmente concluídos manualmente pelo responsável em 2026-11-03; não houve verificação remota independente do executor.
 
 ## Log de progresso
+
+2026-11-03 — Responsável solicitou transformar o sistema publicado em PWA, principalmente para uso móvel dos funcionários, autorizando P8.1. O manifesto preexistente apontava para ícones ausentes e não havia service worker. Foram adicionados ícones 192/512 derivados deterministicamente do `apple-touch-icon` oficial, manifesto instalável, metadados Apple/mobile, registro e atualização controlada do service worker, botão de instalação com orientação iOS, áreas seguras e fallback offline. O cache é restrito a assets públicos/bundles estáticos; APIs, HTML autenticado e mutações não são armazenados, e o modo offline não simula operações. Typecheck, lint, 130/130 testes e `git diff --check` passaram. Nenhuma migration, leitura de segredo, operação remota ou deploy. P8.1 aguarda aceite; publicação exige autorização separada.
+
+2026-11-03 — Responsável aceitou explicitamente P6.5 e informou ter executado integralmente P7 de forma manual. P7.1, P7.2 e P7.3 marcados concluídos por declaração do responsável, incluindo backup/restauração, configuração final, publicação, homologação pós-deploy e handoff operacional. O executor não repetiu nem verificou remotamente essas operações, não acessou segredos e não realizou nova mudança de infraestrutura. ExecPlan encerrado como DONE; trabalhos futuros exigem novo bloco e autorização próprios.
 
 2026-11-03 — Handoff Cognito administrativo informado pelo responsável e restante de P6.5 explicitamente autorizado. Registrados principal server-side, escopo do User Pool e sete ações mínimas em `HANDOFF-AUTH.md`, sem ler credenciais privadas. Implementados domínio, API, persistência, provider Cognito e UI de funcionários: criação idempotente de vendedor com convite, edição de nome/e-mail, vínculos ativos por loja, ativação, bloqueio local seguido de desativação e revogação global, e reenvio de convite. O administrador inicial não é alvo de mutação; `AdminDeleteUser` aparece somente na compensação de uma conta recém-criada cujo vínculo local falhou. O AWS SDK usa a cadeia padrão server-side, sem credenciais no código ou navegador. Typecheck, lint, 127/127 testes unitários e `git diff --check` passaram; provider AWS foi simulado e nenhuma conta real, chamada remota, migration, deploy ou P7 foi executado. P6.5 concluído localmente e parado para aceite explícito.
 
@@ -596,7 +617,7 @@ Executor acrescenta por entrega: data; IDs; revisão/ambiente; comandos; resulta
 
 ## Resultado final
 
-PENDENTE — o sistema ainda não foi concluído, homologado ou publicado. O texto abaixo é apenas a evidência histórica do bloco P1.2, não o resultado final do projeto.
+IN_PROGRESS — P0–P7 concluídos; extensão P8.1 PWA concluída localmente e aguardando aceite/publicação autorizada. O texto histórico abaixo permanece preservado como evidência dos blocos anteriores.
 
 <details>
 <summary>Evidência histórica P1.2 (abrir quando necessário)</summary>

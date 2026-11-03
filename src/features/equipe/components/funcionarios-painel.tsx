@@ -83,7 +83,7 @@ export default function FuncionariosPainel() {
   return <>
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div><h2 className="font-display text-xl font-semibold">Gestão de funcionários</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Contas Cognito, acesso às lojas e situação da equipe</p></div>
+        <p className="mt-1 text-sm text-muted-foreground">Contas colaborador, acesso às lojas e situação da equipe</p></div>
       <button type="button" onClick={abrirNovo} disabled={!lojas.length || salvando}
         className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50">
         <Plus className="size-4" /> Novo funcionário</button>
@@ -142,7 +142,7 @@ export default function FuncionariosPainel() {
               <input type="checkbox" checked={formulario.lojas.includes(loja.id)} onChange={() => alternarLoja(loja.id)} />
               {loja.nome}</label>)}</div></fieldset>
           {editando === "novo" && <p className="text-xs text-muted-foreground">
-            O Cognito enviará o convite e a senha temporária diretamente ao e-mail. Nenhuma senha é armazenada no PH.</p>}
+            Uma senha temporária e um email é enviado para autenticação e criação da nova senha.</p>}
         </div><DialogFooter><button type="button" className="h-10 rounded-xl border border-border px-4 text-sm"
           onClick={() => setEditando(null)}>Cancelar</button>
           <button type="button" disabled={salvando || !formulario.nome.trim() || !formulario.email.trim() || !formulario.lojas.length}

@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useWorkspaceOpcional, type EscopoWorkspace, type LojaWorkspace } from "@/features/workspace/contexto";
 import { podeAcessar, type Acao, type PerfilAutorizado } from "@/features/acesso/politica";
+import { PwaInstallButton } from "@/components/pwa-install-button";
 
 type NavItem = {
   to:
@@ -246,6 +247,7 @@ export function AppShell({
               {sessao?.perfil === "administrador" && <SeletorLoja escopo={escopo} lojas={lojas} onChange={setEscopo} />}
             </div>
 
+            <PwaInstallButton />
             <Notificacoes ativo={sessao?.perfil === "administrador"} />
 
             <span className="hidden items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs text-secondary-foreground sm:flex">

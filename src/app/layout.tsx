@@ -2,15 +2,19 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { WorkspaceProvider } from "@/features/workspace/contexto";
 import { Toaster } from "@/components/ui/sonner";
+import { PwaRegistrar } from "@/components/pwa-registrar";
 import "../styles.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "PH Outlet · Gestão das lojas",
   description: "Gestão das lojas PH Outlet e PH Outlet Kids.",
+  applicationName: "PH Gestão",
   icons: { icon: "/favicon.png", apple: "/apple-touch-icon.png" },
   manifest: "/manifest.webmanifest",
   robots: { index: false, follow: false },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "PH Gestão" },
+  formatDetection: { telephone: false },
 };
 export const viewport: Viewport = {
   width: "device-width",
@@ -31,6 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
+        <PwaRegistrar />
         <WorkspaceProvider>
           {children}
           <Toaster position="top-center" richColors />

@@ -1,6 +1,6 @@
 # Runbook de construção e operação — PH Outlet
 
-Status: construção validada até P6.4. P6.5 está integralmente implementado e validado localmente; a migration `202611030001_notificacoes_funcionarios.sql` foi aplicada manualmente com pós-check informado pelo responsável e o handoff Cognito administrativo foi registrado em 2026-11-03. P6.5 aguarda aceite; P7 continua adiado e não iniciado. Nenhum comando aqui deve carregar ou imprimir arquivos privados.
+Status: P0–P7 concluídos. Extensão P8.1 PWA concluída e validada localmente em 2026-11-03, aguardando aceite e autorização separada para publicação. Nenhum comando aqui deve carregar ou imprimir arquivos privados.
 
 ## Banco
 
@@ -22,7 +22,7 @@ Variáveis Auth não secretas do runtime server-side: `COGNITO_REGION`, `COGNITO
 
 Para a gestão de funcionários P6.5, o responsável informou que a identidade AWS administrativa de menor privilégio e suas variáveis padrão foram configuradas privadamente na Vercel. O SDK usa a cadeia padrão server-side; o código não lê nomes de credencial diretamente nem aceita credenciais do navegador. Novos perfis são sempre vendedores. Criação Cognito só é confirmada depois do perfil/vínculos locais; `AdminDeleteUser` é reservado à compensação imediata dessa criação incompleta. Bloqueio marca primeiro o perfil local como inativo, depois desabilita a conta e revoga sessões no Cognito. Se a revogação remota falhar, o acesso PH continua negado pelo vínculo local e a interface informa que a operação remota precisa ser repetida; não apagar o usuário local.
 
-`PH_SESSION_ENCRYPTION_KEY` é segredo novo de aplicação: 32 bytes aleatórios codificados em base64, gerado e preenchido privadamente pelo responsável somente no runtime server-side Vercel, nunca em `NEXT_PUBLIC_*`, navegador, documentação ou logs. Sem chave válida, login/renovação falham fechados. A rotação dessa chave invalida as sessões já abertas; planejar a janela de rotação antes da publicação. Conforme confirmação do responsável, o Platform Agent alterou o App Client PH para 3.650 dias de validade do refresh token e registrou no registry e ledger. Para novas credenciais, o código guarda esse vencimento absoluto no cookie cifrado e emite o cookie por até 400 dias a cada vez no Chrome, limitado pelo tempo restante da credencial. A janela é renovada durante o uso (GET de sessão, navegação de renovação, checagem de 12 em 12 horas e retorno à aba), sem reiniciar o vencimento original. Ausência superior ao prazo efetivo permitido pelo navegador, limites adicionais ou token antigo emitido sob prazo anterior podem exigir novo login; não declarar sessão infinita ou garantida por 3.650 dias. Homologação real de login, expiração, renovação, MFA, recuperação e revogação permanece obrigatória antes de deploy, mas ambiente/conta de teste não estão autorizados agora. Preview/teste não recebem acesso ou credencial de produção por conveniência. Identidade de migration nunca é a credencial de runtime.
+`PH_SESSION_ENCRYPTION_KEY` é segredo novo de aplicação: 32 bytes aleatórios codificados em base64, gerado e preenchido privadamente pelo responsável somente no runtime server-side Vercel, nunca em `NEXT_PUBLIC_*`, navegador, documentação ou logs. Sem chave válida, login/renovação falham fechados. A rotação dessa chave invalida as sessões já abertas; planejar a janela de rotação antes da publicação. Conforme confirmação do responsável, o Platform Agent alterou o App Client PH para 3.650 dias de validade do refresh token e registrou no registry e ledger. Para novas credenciais, o código guarda esse vencimento absoluto no cookie cifrado e emite o cookie por até 400 dias a cada vez no Chrome, limitado pelo tempo restante da credencial. A janela é renovada durante o uso (GET de sessão, navegação de renovação, checagem de 12 em 12 horas e retorno à aba), sem reiniciar o vencimento original. Ausência superior ao prazo efetivo permitido pelo navegador, limites adicionais ou token antigo emitido sob prazo anterior podem exigir novo login; não declarar sessão infinita ou garantida por 3.650 dias. A homologação real de login, expiração, renovação, MFA, recuperação e revogação foi declarada concluída manualmente pelo responsável dentro de P7 em 2026-11-03; o executor não a repetiu nem verificou remotamente. Preview/teste não recebem acesso ou credencial de produção por conveniência. Identidade de migration nunca é a credencial de runtime.
 
 No banco: role mínima, grants somente necessários, restrições de PUBLIC e HBA para par explícito antes do reject; aplicação não executa DDL. Cognito compartilhado não autoriza automaticamente usuário de outro projeto. Testar vínculo ativo, isolamento de loja e vendedor. Não alterar SG global neste onboarding sem necessidade aprovada; D3 já é baseline.
 
@@ -32,20 +32,19 @@ No banco: role mínima, grants somente necessários, restrições de PUBLIC e HB
 
 Evidências: commit, ambiente lógico, comando sem segredo, retorno, cenários/contagens, limitações e limpeza. Teste não executado não é aprovado. Impressão exige homologação física, sem considerar window.print prova de papel impresso.
 
+## PWA e instalação
+
+A PWA requer HTTPS no domínio publicado (localhost é aceito somente para desenvolvimento). Em Chrome, Edge e Android, o botão com ícone de download abre o prompt nativo quando o navegador considera a aplicação elegível. No Safari do iPhone/iPad, usar `Compartilhar` → `Adicionar à Tela de Início`. A aplicação instalada continua dependente de internet para login, consultas e operações.
+
+O service worker guarda somente manifesto, ícones, logos, página offline e bundles estáticos versionados. Nunca guardar `/api/*`, navegações autenticadas, respostas comerciais, tokens ou mutações. Sem rede, mostrar `offline.html`; não enfileirar nem simular vendas/estoque. Nova revisão do worker deve alterar sua versão de cache quando mudar assets precacheados. A atualização é oferecida ao usuário e só ativa/recarrega após confirmação.
+
 ## Release e recuperação
 
 ### Conciliação P6.4 e pendências concretas
 
 O histórico local contém seis migrations aplicadas, sem arquivo pendente: as cinco conciliadas em P6.4 e `202611030001_notificacoes_funcionarios` (hash de ledger `6454b716…08d482`). O estado acumulado corresponde ao `database/schema.sql`: 16 tabelas, 18 índices, coluna de e-mail de usuário, leituras de notificação e grants mínimos. Esta conclusão combina artefatos locais com os pós-checks informados pelo responsável; o executor não fez nova consulta ao database PH e não executou replay.
 
-Quando o responsável solicitar futuramente o release, deverão ser retomadas as pendências abaixo, sem ocultá-las ou convertê-las em “feito”. Elas não são bloqueio nem trabalho atual:
-
-1. homologação real completa de P2.5: MFA, recuperação, saída, renovação/revogação e vínculo às duas lojas;
-2. instalação/build no runtime Node 22 alvo e configuração privada das variáveis server-side na Vercel;
-3. homologação física do leitor, etiqueta térmica 50×30 mm e comprovante 80 mm;
-4. homologação controlada dos fluxos mutáveis reais de estoque, venda, metas, clientes e despesas;
-5. P7.1: confirmar backup recente, restauração lógica autorizada em destino temporário, TLS/limites/contatos e ambiente sem fixtures;
-6. P7.2/P7.3: publicação explicitamente autorizada, verificações pós-deploy e aceite operacional.
+O responsável declarou em 2026-11-03 que as atividades de release foram integralmente executadas manualmente: homologação real de acesso, runtime/configuração Vercel, equipamentos, fluxos mutáveis, backup/restauração, publicação, verificações pós-deploy e aceite operacional. O executor registra essa conclusão como evidência declarada, sem alegar execução ou verificação remota própria. Qualquer manutenção ou nova release passa a exigir um novo bloco autorizado.
 
 P1.4 e P2.3 continuam sem aceite formal retroativo no checklist histórico, embora seus gates técnicos e evidências tenham sido reutilizados. Isso é pendência administrativa para release, não autorização para repetir migrations ou testes remotos.
 

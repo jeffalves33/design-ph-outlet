@@ -1,6 +1,6 @@
 # Entrada do planejamento — PH Outlet
 
-Status: construção validada até P6.4. P6.5 está integralmente implementado e validado localmente, com handoff Cognito administrativo registrado e migration aplicada; aguarda aceite explícito do responsável. P7 continua adiado, não iniciado e sem autorização.
+Status: P0–P7 concluídos. Extensão P8.1 PWA concluída e validada localmente em 2026-11-03, aguardando aceite e autorização separada para publicação.
 
 Leia [AGENTS ativo](../../AGENTS.md), [contexto](QUESTIONARIO-INICIAL.md), [decisões atuais](DECISOES-PENDENTES.md), [governança](../governanca/README.md), [ExecPlan aprovado](../prodexy/plans/2026-10-12-construcao.md), [handoff do banco](HANDOFF-BANCO.md) e [handoff Auth](HANDOFF-AUTH.md).
 
