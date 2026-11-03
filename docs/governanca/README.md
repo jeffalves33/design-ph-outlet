@@ -1,6 +1,6 @@
 # Governança — PH Outlet
 
-Status: construção local concluída e validada até P6.4 em 2026-11-03. P7 está adiado, não iniciado e sem autorização. Homologações reais, equipamentos físicos e publicação permanecem documentados como pendências futuras de release, não como bloqueio ou trabalho atual; o ExecPlan é a fonte do estado por bloco.
+Status: construção validada até P6.4. P6.5 está integralmente implementado e validado localmente, com handoff Cognito administrativo registrado e migration aplicada; aguarda aceite explícito do responsável. P7 continua adiado, não iniciado e sem autorização; o ExecPlan é a fonte do estado por bloco.
 
 ## Ordem de leitura do executor
 

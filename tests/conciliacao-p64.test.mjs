@@ -11,6 +11,7 @@ const esperados = new Map([
   ["202610240002_tamanho_categoria.sql", "7d073565370bd455dd7b942b36643ea117e1ec8cad515f6bf12947b807de80a8"],
   ["202610250001_metas.sql", "03739587ddd887033831142efdc1a8604acc76e2f922fc0892530ee7b49015f2"],
   ["202610260001_clientes_financeiro.sql", "bec909299d360642a2c3be8297661de0b62382aafecc5475216f27ae87e7a07e"],
+  ["202611030001_notificacoes_funcionarios.sql", "6090db60b4cf38889377693f743c8bcaf6ba0380a3d3b530d77e7993563f978d"],
 ]);
 const schema = readFileSync(new URL("../database/schema.sql", import.meta.url), "utf8");
 const migrations = arquivos.map((arquivo) => ({
@@ -22,7 +23,7 @@ function nomes(sql, expressao) {
   return [...sql.matchAll(expressao)].map((resultado) => resultado[1]).sort();
 }
 
-test("histórico contém somente as cinco migrations imutáveis e seus hashes canônicos", () => {
+test("histórico contém as migrations versionadas e seus hashes canônicos", () => {
   assert.deepEqual(arquivos, [...esperados.keys()]);
   for (const { arquivo, sql } of migrations) {
     const hash = createHash("sha256").update(sql).digest("hex");
@@ -41,20 +42,21 @@ test("schema canônico contém exatamente as tabelas e índices criados pelo his
   const indicesSchema = nomes(schema, /CREATE(?: UNIQUE)? INDEX ([a-z0-9_]+)/g);
   assert.deepEqual(tabelasSchema, tabelasHistorico);
   assert.deepEqual(indicesSchema, indicesHistorico);
-  assert.equal(tabelasSchema.length, 15);
-  assert.equal(indicesSchema.length, 16);
+  assert.equal(tabelasSchema.length, 16);
+  assert.equal(indicesSchema.length, 18);
 });
 
 test("evoluções acumuladas estão materializadas no schema sem ampliar privilégios", () => {
   assert.match(schema, /tamanho text NOT NULL/);
   assert.match(schema, /tamanho_registrado text NOT NULL/);
   assert.match(schema, /cliente_id uuid REFERENCES public\.clientes\(id\)/);
-  for (const tabela of ["metas", "historico_metas", "clientes", "despesas"])
+  assert.match(schema, /email text CHECK/);
+  for (const tabela of ["metas", "historico_metas", "clientes", "despesas", "notificacoes_lidas"])
     assert.match(schema, new RegExp(`CREATE TABLE public\\.${tabela}\\b`));
   assert.doesNotMatch(schema, /GRANT (?:ALL|CREATE|DELETE|TRUNCATE)/i);
   assert.doesNotMatch(schema, /CREATE (?:DATABASE|ROLE|USER)|ALTER ROLE|PASSWORD|HOSTSSL/i);
   assert.match(schema, /202610260001_clientes_financeiro\.sql aplicada manualmente/);
-  assert.doesNotMatch(schema, /aguardando aplicacao manual/);
+  assert.match(schema, /202611030001_notificacoes_funcionarios\.sql aplicada manualmente/);
 });
 
 test("evidências recebidas do banco cobrem cada versão sem alegar nova consulta remota", () => {

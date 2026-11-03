@@ -7,6 +7,7 @@ import { AppShell } from "@/components/app-shell";
 import { Chip, Field, SectionCard, fieldCls } from "@/components/form-bits";
 import { StatCard } from "@/components/stat-card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import FuncionariosPainel from "@/features/equipe/components/funcionarios-painel";
 
 type Meta = {
   id: string; lojaId: string; lojaNome: string; vendedorUsuarioId: string;
@@ -34,6 +35,7 @@ function paraCentavos(valor: string) {
 const porcentagem = (meta: Meta) => Number((BigInt(meta.realizadoCentavos) * 100n) / BigInt(meta.alvoCentavos));
 
 export default function MetasEquipe() {
+  const [aba, setAba] = useState<"funcionarios" | "metas">("funcionarios");
   const [metas, setMetas] = useState<Meta[]>([]);
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>([]);
   const [erro, setErro] = useState("");
@@ -103,10 +105,19 @@ export default function MetasEquipe() {
   const pessoas = useMemo(() => new Set(metas.map((meta) => meta.vendedorUsuarioId)).size, [metas]);
 
   return (
-    <AppShell title="Metas da equipe" subtitle="Crie metas por responsável e loja, com períodos livres e histórico"
-      actions={<button type="button" onClick={abrirNova} disabled={!responsaveis.length}
+    <AppShell title="Funcionários" subtitle="Gerencie acessos, lojas e metas da equipe"
+      actions={aba === "metas" ? <button type="button" onClick={abrirNova} disabled={!responsaveis.length}
         className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50">
-        <Plus className="size-4" /> Nova meta</button>}>
+        <Plus className="size-4" /> Nova meta</button> : undefined}>
+      <div className="inline-flex w-fit rounded-xl bg-secondary p-1" role="tablist" aria-label="Módulos da equipe">
+        <button type="button" role="tab" aria-selected={aba === "funcionarios"} onClick={() => setAba("funcionarios")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium ${aba === "funcionarios" ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+          Funcionários</button>
+        <button type="button" role="tab" aria-selected={aba === "metas"} onClick={() => setAba("metas")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium ${aba === "metas" ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+          Metas</button>
+      </div>
+      {aba === "funcionarios" ? <FuncionariosPainel /> : <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard label="Metas cadastradas" value={String(metas.length)} icon={Target} tone="brand" />
         <StatCard label="Em andamento" value={String(ativas)} icon={CalendarDays} />
@@ -159,6 +170,7 @@ export default function MetasEquipe() {
           </article>)}</div>
         </DialogContent>
       </Dialog>
+      </>}
     </AppShell>
   );
 }

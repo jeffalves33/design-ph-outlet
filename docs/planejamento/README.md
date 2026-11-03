@@ -1,6 +1,6 @@
 # Entrada do planejamento — PH Outlet
 
-Status: construção local concluída e validada até P6.4 em 2026-11-03. P7 está adiado, não iniciado e sem autorização. As pendências de release permanecem documentadas para solicitação futura; não são bloqueio nem trabalho atual.
+Status: construção validada até P6.4. P6.5 está integralmente implementado e validado localmente, com handoff Cognito administrativo registrado e migration aplicada; aguarda aceite explícito do responsável. P7 continua adiado, não iniciado e sem autorização.
 
 Leia [AGENTS ativo](../../AGENTS.md), [contexto](QUESTIONARIO-INICIAL.md), [decisões atuais](DECISOES-PENDENTES.md), [governança](../governanca/README.md), [ExecPlan aprovado](../prodexy/plans/2026-10-12-construcao.md), [handoff do banco](HANDOFF-BANCO.md) e [handoff Auth](HANDOFF-AUTH.md).
 

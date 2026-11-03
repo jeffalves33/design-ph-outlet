@@ -1,4 +1,4 @@
--- Estado canônico incluindo a evolução P5.2 ainda pendente de aplicação manual.
+-- Estado canônico incluindo as seis migrations aplicadas.
 -- PostgreSQL 17; executar com a identidade de manutenção no database PH.
 -- Sem dados de exemplo, extensões, criação de database/role ou infraestrutura.
 BEGIN;
@@ -20,6 +20,9 @@ CREATE TABLE public.usuarios (
   id uuid PRIMARY KEY,
   emissor_cognito text NOT NULL CHECK (length(trim(emissor_cognito)) > 0),
   sub_cognito text NOT NULL CHECK (length(trim(sub_cognito)) > 0),
+  email text CHECK (
+    email IS NULL OR (length(btrim(email)) BETWEEN 3 AND 254 AND position('@' IN btrim(email)) > 1)
+  ),
   nome_exibicao text NOT NULL CHECK (length(trim(nome_exibicao)) > 0),
   perfil text NOT NULL CHECK (perfil IN ('administrador', 'vendedor')),
   ativo boolean NOT NULL DEFAULT true,
@@ -32,6 +35,13 @@ CREATE TABLE public.usuarios_lojas (
   loja_id uuid NOT NULL REFERENCES public.lojas(id),
   ativo boolean NOT NULL DEFAULT true,
   PRIMARY KEY (usuario_id, loja_id)
+);
+
+CREATE TABLE public.notificacoes_lidas (
+  usuario_id uuid NOT NULL REFERENCES public.usuarios(id),
+  chave text NOT NULL CHECK (length(btrim(chave)) BETWEEN 1 AND 240),
+  lida_em timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (usuario_id, chave)
 );
 
 -- Um contador por loja; reservar o próximo código sob lock na transação do cadastro.
@@ -194,6 +204,10 @@ CREATE TABLE public.historico_metas (
 );
 
 CREATE INDEX usuarios_perfil_ativo_idx ON public.usuarios (perfil, ativo);
+CREATE UNIQUE INDEX usuarios_email_uidx ON public.usuarios (lower(btrim(email)))
+  WHERE email IS NOT NULL;
+CREATE INDEX notificacoes_lidas_usuario_data_idx
+  ON public.notificacoes_lidas (usuario_id, lida_em DESC);
 CREATE INDEX categorias_loja_ativas_idx ON public.categorias (loja_id, codigo) WHERE arquivada_em IS NULL;
 CREATE UNIQUE INDEX categorias_loja_nome_tamanho_ativas_uidx
   ON public.categorias (loja_id, lower(btrim(nome)), lower(btrim(tamanho)))
@@ -221,15 +235,18 @@ GRANT USAGE ON SCHEMA public TO prodexy_ph_outlet_app;
 GRANT SELECT ON public.lojas, public.usuarios, public.usuarios_lojas,
   public.sequencias_categoria, public.categorias, public.saldos_estoque,
   public.operacoes_estoque, public.vendas, public.itens_venda, public.movimentos_estoque,
-  public.metas, public.historico_metas, public.clientes, public.despesas
+  public.metas, public.historico_metas, public.clientes, public.despesas,
+  public.notificacoes_lidas
   TO prodexy_ph_outlet_app;
 GRANT INSERT ON public.lojas, public.usuarios, public.usuarios_lojas,
   public.sequencias_categoria, public.categorias, public.saldos_estoque,
   public.operacoes_estoque, public.vendas, public.itens_venda, public.movimentos_estoque,
-  public.metas, public.historico_metas, public.clientes, public.despesas
+  public.metas, public.historico_metas, public.clientes, public.despesas,
+  public.notificacoes_lidas
   TO prodexy_ph_outlet_app;
 GRANT UPDATE ON public.lojas, public.usuarios, public.usuarios_lojas,
-  public.sequencias_categoria, public.categorias, public.saldos_estoque, public.metas
+  public.sequencias_categoria, public.categorias, public.saldos_estoque, public.metas,
+  public.notificacoes_lidas
   TO prodexy_ph_outlet_app;
 
 COMMIT;
@@ -238,3 +255,4 @@ COMMIT;
 -- 202610240002_tamanho_categoria.sql aplicada manualmente conforme pós-check relatado pelo responsável em 2026-10-25; não repetir.
 -- 202610250001_metas.sql aplicada manualmente conforme pos-check relatado pelo responsavel em 2026-10-25; nao repetir.
 -- 202610260001_clientes_financeiro.sql aplicada manualmente conforme pos-check relatado pelo responsavel em 2026-10-26; nao repetir.
+-- 202611030001_notificacoes_funcionarios.sql aplicada manualmente conforme pós-check relatado pelo responsável em 2026-11-03; não repetir.

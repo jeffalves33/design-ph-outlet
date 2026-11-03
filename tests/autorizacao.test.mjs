@@ -75,7 +75,7 @@ test("entrada de API/action chama sessão do servidor; páginas e menu usam a me
   const menu = readFileSync(new URL("../src/components/app-shell.tsx", import.meta.url), "utf8");
   assert.match(menu, /filter\(\(item\) => podeAcessar\(/);
   for (const [pagina, acao] of [["page.tsx", "painel.consultar"], ["vendas/page.tsx", "vendas.consultar"],
-    ["estoque/page.tsx", "estoque.consultar"], ["colaboradores/page.tsx", "metas.equipe.consultar"],
+    ["estoque/page.tsx", "estoque.consultar"], ["colaboradores/page.tsx", "equipe.consultar"],
     ["meu-desempenho/page.tsx", "metas.proprias.consultar"],
     ["clientes/page.tsx", "clientes.consultar"], ["financeiro/page.tsx", "financeiro.consultar"]]) {
     const fonte = readFileSync(new URL(`../src/app/${pagina}`, import.meta.url), "utf8");

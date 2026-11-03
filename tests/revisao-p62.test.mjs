@@ -7,7 +7,8 @@ const ler = (arquivo) => readFileSync(new URL(`../${arquivo}`, import.meta.url),
 test("login remove textos temporários e orienta cada estado da jornada", () => {
   const login = ler("src/features/acesso/components/page-view.tsx");
   assert.doesNotMatch(login, /Design Teste|Interface em integração|Voltar à interface/);
-  assert.match(login, /Duas lojas\. Uma gestão\./);
+  assert.match(login, />\s*PH Outlet\s*</);
+  assert.match(login, /by Prodexy Labs\./);
   assert.match(login, /Informe seu e-mail para receber o código de recuperação\./);
   assert.match(login, /Informe o código recebido e escolha sua nova senha\./);
   assert.match(login, /Conclua a verificação solicitada/);

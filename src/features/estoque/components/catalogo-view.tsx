@@ -6,6 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { SectionCard, fieldCls } from "@/components/form-bits";
 import { StatCard } from "@/components/stat-card";
 import { EtiquetasDialog, type CategoriaEtiqueta } from "@/features/etiquetas/components/etiquetas-dialog";
+import { useWorkspace } from "@/features/workspace/contexto";
 import { centavosDoTexto, codigoExibido } from "../dominio/categoria";
 import { CHAVE_OPERACAO_PENDENTE, lerOperacaoPendente, type OperacaoPendente } from "../dominio/operacao-pendente";
 
@@ -24,9 +25,9 @@ const moeda = (centavos: string) => new Intl.NumberFormat("pt-BR", {
 }).format(Number(centavos) / 100);
 
 export default function CatalogoView() {
-  const [lojas, setLojas] = useState<Loja[]>([]);
+  const { escopo, setEscopo } = useWorkspace();
+  const lojaId = escopo === "todas" ? "" : escopo;
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [lojaId, setLojaId] = useState("");
   const [nome, setNome] = useState("");
   const [tamanho, setTamanho] = useState("");
   const [preco, setPreco] = useState("");
@@ -67,9 +68,7 @@ export default function CatalogoView() {
     const res = await fetch("/api/catalogo", { cache: "no-store", credentials: "same-origin" });
     const dados = await res.json() as { lojas?: Loja[]; categorias?: Categoria[]; erro?: string };
     if (!res.ok) throw new Error(dados.erro ?? "Não foi possível consultar o catálogo.");
-    setLojas(dados.lojas ?? []);
     setCategorias(dados.categorias ?? []);
-    setLojaId((atual) => atual || dados.lojas?.[0]?.id || "");
   };
 
   useEffect(() => {
@@ -85,7 +84,6 @@ export default function CatalogoView() {
         if (!sessao.perfil?.id) throw new Error("Sessão indisponível.");
         if (ativo) {
           usuarioId.current = sessao.perfil.id;
-          setLojas(dados.lojas ?? []);
           setCategorias(dados.categorias ?? []);
           const guardada = lerOperacaoPendente(
             window.localStorage.getItem(CHAVE_OPERACAO_PENDENTE), sessao.perfil.id);
@@ -97,17 +95,17 @@ export default function CatalogoView() {
               categoriaId: guardada.categoriaId, tipo: guardada.tipo,
               variacao: guardada.variacao, motivo: guardada.motivo.trim() });
             chavePendente.current = { assinatura, chave: guardada.chave };
-            setLojaId(guardada.lojaId); setMovimentando(guardada.categoriaId);
+            setEscopo(guardada.lojaId); setMovimentando(guardada.categoriaId);
             setTipoMovimento(guardada.tipo); setVariacaoTexto(String(guardada.variacao));
             setMotivoMovimento(guardada.motivo); setReconciliacaoPendente(true);
             setMensagem("Há uma movimentação com resposta incerta. Verifique antes de reenviar.");
-          } else setLojaId(dados.lojas?.[0]?.id ?? "");
+          }
         }
       })
       .catch((falha) => { if (ativo) setErro(falha instanceof Error ? falha.message : "Consulta indisponível."); })
       .finally(() => { if (ativo) setCarregando(false); });
     return () => { ativo = false; };
-  }, []);
+  }, [setEscopo]);
 
   useEffect(() => {
     if (!movimentando || !lojaId) { setMovimentos([]); return; }
@@ -145,7 +143,7 @@ export default function CatalogoView() {
   };
 
   const editar = (categoria: Categoria) => {
-    setEditando(categoria.id); setLojaId(categoria.loja_id);
+    setEditando(categoria.id); setEscopo(categoria.loja_id);
     setNome(categoria.nome); setTamanho(categoria.tamanho);
     setPreco((Number(categoria.preco_centavos) / 100).toFixed(2));
     setErro(""); setMensagem("");
@@ -271,15 +269,9 @@ export default function CatalogoView() {
       </div>
 
       <SectionCard title="Catálogo da loja" description="Cada nome e tamanho tem código, preço e saldo próprios nesta loja">
-        <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Loja autorizada
-          <select className={`${fieldCls} mt-2`} value={lojaId} disabled={salvandoMovimento || reconciliacaoPendente} onChange={(evento) => {
-            setLojaId(evento.target.value); setEditando(null); setNome(""); setTamanho(""); setPreco("");
-            setMovimentando(null); setErroMovimento(""); esquecerOperacao();
-          }}>
-            {lojas.length === 0 && <option value="">Nenhuma loja vinculada</option>}
-            {lojas.map((loja) => <option key={loja.id} value={loja.id}>{loja.nome}</option>)}
-          </select>
-        </label>
+        {!lojaId && <p role="status" className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm">
+          Selecione uma loja no cabeçalho para consultar ou alterar o catálogo.
+        </p>}
         <form className="mt-5 grid gap-3 border-t border-border pt-5 sm:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]" onSubmit={(evento) => { evento.preventDefault(); void salvar(); }}>
           <input className={fieldCls} value={nome} onChange={(evento) => setNome(evento.target.value)} placeholder="Nome da categoria" maxLength={120} required />
           <input className={fieldCls} value={tamanho} onChange={(evento) => setTamanho(evento.target.value)} placeholder="Tamanho" aria-label="Tamanho" maxLength={40} required />

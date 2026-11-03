@@ -14,7 +14,6 @@ import {
   PackageSearch,
   ShoppingBag,
   Sparkles,
-  TrendingUp,
   Target,
   Users,
   UsersRound,
@@ -22,7 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 const logoOutlet = "/ph_outlet.png";
 const logoKids = "/ph_kids.png";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -340,53 +339,45 @@ function SeletorLoja({ escopo, lojas, onChange }: {
   );
 }
 
-function diasParaAniversario(nascimento: string) {
-  const hojeTexto = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(new Date());
-  const hoje = new Date(`${hojeTexto}T00:00:00Z`);
-  const [, mes, dia] = nascimento.split("-").map(Number);
-  let proximo = new Date(Date.UTC(hoje.getUTCFullYear(), (mes ?? 1) - 1, dia ?? 1));
-  if (proximo < hoje) proximo = new Date(Date.UTC(hoje.getUTCFullYear() + 1, (mes ?? 1) - 1, dia ?? 1));
-  return Math.round((proximo.getTime() - hoje.getTime()) / 86_400_000);
-}
+type AlertaNotificacao = Readonly<{
+  chave: string; tipo: "aniversario" | "estoque_zerado"; lojaId: string | null;
+  titulo: string; descricao: string; lida: boolean;
+}>;
 
 function Notificacoes({ ativo }: { ativo: boolean }) {
   const { escopo } = useWorkspaceOpcional();
-  const [aniversarios, setAniversarios] = useState<{ id: string; nome: string; dias: number }[]>([]);
-  const [semEstoque, setSemEstoque] = useState<{
-    id: string; lojaId: string; nome: string; tamanho: string; codigo: number;
-  }[]>([]);
+  const [alertas, setAlertas] = useState<AlertaNotificacao[]>([]);
   const [falhou, setFalhou] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
-  useEffect(() => {
-    if (!ativo) { setAniversarios([]); setSemEstoque([]); setFalhou(false); return; }
+  const carregar = useCallback(() => {
+    if (!ativo) { setAlertas([]); setFalhou(false); return () => {}; }
     let atual = true;
-    Promise.all([
-      fetch("/api/clientes", { cache: "no-store", credentials: "same-origin" }),
-      fetch("/api/catalogo", { cache: "no-store", credentials: "same-origin" }),
-    ]).then(async ([clientesResposta, catalogoResposta]) => {
-      if (!clientesResposta.ok || !catalogoResposta.ok) throw new Error();
-      const clientes = await clientesResposta.json();
-      const catalogo = await catalogoResposta.json();
-      if (!atual) return;
-      setAniversarios((clientes.clientes ?? [])
-        .filter((cliente: { dataNascimento: string | null }) => cliente.dataNascimento)
-        .map((cliente: { id: string; nome: string; dataNascimento: string }) => ({
-          id: cliente.id, nome: cliente.nome, dias: diasParaAniversario(cliente.dataNascimento),
-        })).filter((item: { dias: number }) => item.dias <= 15)
-        .sort((a: { dias: number }, b: { dias: number }) => a.dias - b.dias));
-      setSemEstoque((catalogo.categorias ?? [])
-        .filter((categoria: { quantidade: string }) => BigInt(categoria.quantidade) === 0n)
-        .map((categoria: { id: string; loja_id: string; nome: string; tamanho: string; codigo: number }) => ({
-          id: categoria.id, lojaId: categoria.loja_id, nome: categoria.nome,
-          tamanho: categoria.tamanho, codigo: categoria.codigo,
-        })));
-      setFalhou(false);
-    }).catch(() => { if (atual) setFalhou(true); });
+    void fetch("/api/notificacoes", { cache: "no-store", credentials: "same-origin" })
+      .then(async (resposta) => {
+        const dados = await resposta.json() as { notificacoes?: AlertaNotificacao[] };
+        if (!resposta.ok) throw new Error();
+        if (atual) { setAlertas(dados.notificacoes ?? []); setFalhou(false); }
+      }).catch(() => { if (atual) setFalhou(true); });
     return () => { atual = false; };
   }, [ativo]);
+  useEffect(() => carregar(), [carregar]);
 
-  const estoqueVisivel = escopo === "todas" ? semEstoque : semEstoque.filter((item) => item.lojaId === escopo);
-  const total = aniversarios.length + estoqueVisivel.length;
+  const visiveis = alertas.filter((item) => item.lojaId === null || escopo === "todas" || item.lojaId === escopo);
+  const naoLidas = visiveis.filter((item) => !item.lida);
+  const total = naoLidas.length;
+  const marcar = async (chaves: string[]) => {
+    if (!chaves.length || salvando) return;
+    setSalvando(true); setFalhou(false);
+    try {
+      const resposta = await fetch("/api/notificacoes", { method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chaves }) });
+      if (!resposta.ok) throw new Error();
+      const marcadas = new Set(chaves);
+      setAlertas((atuais) => atuais.map((item) => marcadas.has(item.chave) ? { ...item, lida: true } : item));
+    } catch { setFalhou(true); }
+    finally { setSalvando(false); }
+  };
 
   return (
     <Popover>
@@ -402,44 +393,37 @@ function Notificacoes({ ativo }: { ativo: boolean }) {
         )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[19rem] p-0">
-        <div className="border-b border-border px-4 py-3">
-          <p className="eyebrow">Notificações</p>
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+          <div><p className="eyebrow">Notificações</p>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {falhou ? "Alertas indisponíveis." : total === 0 ? "Nenhum alerta ativo." : `${total} alertas ativos`}
-          </p>
+            {falhou ? "Não foi possível atualizar." : total === 0 ? "Nenhuma não lida." : `${total} não ${total === 1 ? "lida" : "lidas"}`}
+          </p></div>
+          {naoLidas.length > 0 && <button type="button" disabled={salvando}
+            onClick={() => void marcar(naoLidas.map((item) => item.chave))}
+            className="text-xs font-medium text-brand disabled:opacity-50">Marcar todas como lidas</button>}
         </div>
         <div className="max-h-80 divide-y divide-border overflow-y-auto">
-          {aniversarios.map((item) => (
-            <div key={item.id} className="flex gap-3 px-4 py-3">
-              <Cake className="mt-0.5 size-4 shrink-0 text-brand" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{item.nome}</p>
-                <p className="text-xs text-muted-foreground">
-                  {item.dias === 0 ? "Faz aniversário hoje" : `Aniversário em ${item.dias} dias`} · contato de
-                  relacionamento
-                </p>
-              </div>
+          {visiveis.map((item) => (
+            <div key={item.chave} className={`flex gap-3 px-4 py-3 ${item.lida ? "opacity-60" : ""}`}>
+              {item.tipo === "aniversario" ? <Cake className="mt-0.5 size-4 shrink-0 text-brand" />
+                : <PackageSearch className="mt-0.5 size-4 shrink-0 text-warning" />}
+              <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{item.titulo}</p>
+                <p className="text-xs text-muted-foreground">{item.descricao}</p></div>
+              {!item.lida && <button type="button" disabled={salvando} onClick={() => void marcar([item.chave])}
+                className="shrink-0 text-xs font-medium text-brand disabled:opacity-50" aria-label={`Marcar ${item.titulo} como lida`}>
+                Marcar como lida
+              </button>}
+              {item.lida && <Check className="mt-0.5 size-4 shrink-0 text-success" aria-label="Lida" />}
             </div>
           ))}
-          {estoqueVisivel.map((item) => (
-            <div key={item.id} className="flex gap-3 px-4 py-3">
-              <PackageSearch className="mt-0.5 size-4 shrink-0 text-warning" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{item.nome} · {item.tamanho}</p>
-                <p className="text-xs text-muted-foreground">
-                  {String(item.codigo).padStart(5, "0")} · estoque zerado
-                </p>
-              </div>
-            </div>
-          ))}
-          {total === 0 && (
+          {visiveis.length === 0 && (
             <div className="flex items-center gap-3 px-4 py-6 text-sm text-muted-foreground">
               <Sparkles className="size-4" /> {falhou ? "Não foi possível consultar os alertas." : "Nenhum aniversário próximo ou estoque zerado."}
             </div>
           )}
         </div>
         <div className="flex items-center gap-2 border-t border-border px-4 py-2.5 text-xs text-muted-foreground">
-          <TrendingUp className="size-3.5" /> Dados atuais do catálogo e CRM
+          <Check className="size-3.5" /> Leituras salvas por usuário
         </div>
       </PopoverContent>
     </Popover>

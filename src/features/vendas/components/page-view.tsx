@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Chip, SectionCard, fieldCls } from "@/components/form-bits";
+import { useWorkspace } from "@/features/workspace/contexto";
 import { ComprovanteDialog, type ComprovanteVenda } from "./comprovante-dialog";
 import {
   adicionarNaSacola, definirQuantidade, ErroSacola, normalizarCodigoVenda,
@@ -45,10 +46,9 @@ export default function Vendas({ lojas, vendedores, usuarioId }: {
   vendedores: readonly VendedorVenda[];
   usuarioId: string;
 }) {
-  const [lojaId, setLojaId] = useState(lojas[0]?.id ?? "");
-  const [vendedorId, setVendedorId] = useState(
-    vendedores.find((vendedor) => vendedor.lojaId === lojas[0]?.id)?.id ?? "",
-  );
+  const { escopo, setEscopo } = useWorkspace();
+  const lojaId = escopo === "todas" ? "" : escopo;
+  const [vendedorId, setVendedorId] = useState("");
   const [clientes, setClientes] = useState<ClienteVenda[]>([]);
   const [clienteId, setClienteId] = useState("");
   const [codigo, setCodigo] = useState("");
@@ -66,6 +66,7 @@ export default function Vendas({ lojas, vendedores, usuarioId }: {
   const [comprovante, setComprovante] = useState<ComprovanteVenda | null>(null);
   const [carregandoComprovante, setCarregandoComprovante] = useState<string | null>(null);
   const codigoRef = useRef<HTMLInputElement>(null);
+  const lojaAnterior = useRef(lojaId);
 
   const totalPecas = quantidadePecas(itens);
   const totalCentavos = useMemo(() => totalSacolaCentavos(itens), [itens]);
@@ -73,6 +74,19 @@ export default function Vendas({ lojas, vendedores, usuarioId }: {
   const vendedoresDaLoja = vendedores.filter((vendedor) => vendedor.lojaId === lojaId);
   const edicaoBloqueada = confirmando || Boolean(pendente);
   const focarLeitor = () => requestAnimationFrame(() => codigoRef.current?.focus());
+
+  useEffect(() => {
+    if (lojaAnterior.current === lojaId) return;
+    lojaAnterior.current = lojaId;
+    if (pendente && pendente.lojaId !== lojaId) {
+      setEscopo(pendente.lojaId);
+      return;
+    }
+    if (itens.length) toast.info("A sacola foi limpa ao trocar de loja.");
+    setVendedorId(vendedores.find((vendedor) => vendedor.lojaId === lojaId)?.id ?? "");
+    setItens([]); setUltimaLeitura(null); setCodigo(""); setMensagemVenda(""); setErroVenda("");
+    focarLeitor();
+  }, [itens.length, lojaId, pendente, setEscopo, vendedores]);
 
   useEffect(() => {
     let recuperada: VendaPendente | null = null;
@@ -86,13 +100,13 @@ export default function Vendas({ lojas, vendedores, usuarioId }: {
     if (!recuperada || !lojas.some((loja) => loja.id === recuperada.lojaId) ||
         !vendedores.some((vendedor) => vendedor.id === recuperada.vendedorUsuarioId &&
           vendedor.lojaId === recuperada.lojaId)) return;
-    setLojaId(recuperada.lojaId);
+    setEscopo(recuperada.lojaId);
     setVendedorId(recuperada.vendedorUsuarioId);
     setClienteId(recuperada.clienteId ?? "");
     setItens([...recuperada.itensExibicao]);
     setPendente(recuperada);
     setErroVenda("Há uma confirmação pendente. Verifique o resultado antes de reenviar.");
-  }, [lojas, usuarioId, vendedores]);
+  }, [lojas, setEscopo, usuarioId, vendedores]);
 
   useEffect(() => {
     let ativo = true;
@@ -174,19 +188,6 @@ export default function Vendas({ lojas, vendedores, usuarioId }: {
     } catch (erro) {
       toast.error(erro instanceof ErroSacola ? erro.message : "Não foi possível alterar a quantidade.");
     }
-  }
-
-  function trocarLoja(novaLojaId: string) {
-    if (pendente) return;
-    if (itens.length) toast.info("A sacola foi limpa ao trocar de loja.");
-    setLojaId(novaLojaId);
-    setVendedorId(vendedores.find((vendedor) => vendedor.lojaId === novaLojaId)?.id ?? "");
-    setItens([]);
-    setUltimaLeitura(null);
-    setCodigo("");
-    setMensagemVenda("");
-    setErroVenda("");
-    focarLeitor();
   }
 
   async function confirmar() {
@@ -314,18 +315,9 @@ export default function Vendas({ lojas, vendedores, usuarioId }: {
                   Cada Enter ou clique é uma leitura intencional; códigos repetidos somam na sacola.
                 </p>
               </div>
-              <label className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Loja:</span>
-                <select
-                  value={lojaId}
-                  disabled={!lojas.length || consultando || edicaoBloqueada}
-                  onChange={(evento) => trocarLoja(evento.target.value)}
-                  className="h-9 rounded-xl border border-input bg-card px-3 text-sm font-medium outline-none focus:ring-2 focus:ring-ring/40 disabled:opacity-60"
-                >
-                  {!lojas.length && <option value="">Nenhuma loja disponível</option>}
-                  {lojas.map((loja) => <option key={loja.id} value={loja.id}>{loja.nome}</option>)}
-                </select>
-              </label>
+              <p className="text-xs text-muted-foreground">
+                {lojaSelecionada ? `Loja selecionada no cabeçalho: ${lojaSelecionada.nome}` : "Selecione uma loja no cabeçalho para iniciar a venda."}
+              </p>
             </div>
 
             <div className="p-4 sm:p-5">

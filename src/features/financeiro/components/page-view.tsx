@@ -57,6 +57,7 @@ export default function Financeiro() {
   useEffect(() => { void carregar(); }, [carregar]);
 
   const lojaEscopo = escopo === "todas" ? null : escopo;
+  const lojaSelecionada = lojas.find((loja) => loja.id === lojaEscopo) ?? null;
   const vendasEscopo = lojaEscopo ? vendas.filter((item) => item.lojaId === lojaEscopo) : vendas;
   const despesasEscopo = lojaEscopo ? despesas.filter((item) => item.lojaId === lojaEscopo) : despesas;
   const receita = vendasEscopo.reduce((soma, item) => soma + BigInt(item.totalCentavos), 0n);
@@ -76,7 +77,7 @@ export default function Financeiro() {
   return <AppShell title="Relatório financeiro"
     subtitle={escopo === "todas" ? "Resultado consolidado das duas lojas" : "Resultado da loja selecionada"}
     actions={<><input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className={`${fieldCls} w-40`} aria-label="Selecionar mês" />
-      <NovaDespesa lojas={lojas} lojaInicial={lojaEscopo} aoSalvar={carregar} /></>}>
+      <NovaDespesa loja={lojaSelecionada} aoSalvar={carregar} /></>}>
     {erro && <p role="alert" className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive">{erro}</p>}
     {carregando && <p className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">Carregando relatório…</p>}
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -117,21 +118,21 @@ function paraCentavos(valor: string) {
   if (total <= 0n) throw new Error("Informe um valor positivo.");
   return total.toString();
 }
-function NovaDespesa({ lojas, lojaInicial, aoSalvar }: { lojas: Loja[]; lojaInicial: string | null; aoSalvar: () => Promise<void> }) {
+function NovaDespesa({ loja, aoSalvar }: { loja: Loja | null; aoSalvar: () => Promise<void> }) {
   const [open, setOpen] = useState(false); const [salvando, setSalvando] = useState(false); const [id, setId] = useState("");
-  const [formulario, setFormulario] = useState({ descricao: "", valor: "", dataDespesa: hojeCivil(), categoria: "fornecedores" as Categoria, lojaId: "" });
-  const abrir = (aberto: boolean) => { setOpen(aberto); if (aberto) { if (!id) setId(crypto.randomUUID()); if (!formulario.lojaId) setFormulario((atual) => ({ ...atual, lojaId: lojaInicial ?? lojas[0]?.id ?? "" })); } };
+  const [formulario, setFormulario] = useState({ descricao: "", valor: "", dataDespesa: hojeCivil(), categoria: "fornecedores" as Categoria });
+  const abrir = (aberto: boolean) => { setOpen(aberto); if (aberto && !id) setId(crypto.randomUUID()); };
   const salvar = async () => { try { setSalvando(true); const resposta = await fetch("/api/financeiro", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, lojaId: formulario.lojaId, descricao: formulario.descricao, categoria: formulario.categoria, valorCentavos: paraCentavos(formulario.valor), dataDespesa: formulario.dataDespesa }) });
+    body: JSON.stringify({ id, lojaId: loja?.id, descricao: formulario.descricao, categoria: formulario.categoria, valorCentavos: paraCentavos(formulario.valor), dataDespesa: formulario.dataDespesa }) });
     const dados = await resposta.json(); if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível lançar a despesa.");
-    toast.success("Despesa lançada."); setOpen(false); setId(""); setFormulario({ descricao: "", valor: "", dataDespesa: hojeCivil(), categoria: "fornecedores", lojaId: lojaInicial ?? lojas[0]?.id ?? "" }); await aoSalvar();
+    toast.success("Despesa lançada."); setOpen(false); setId(""); setFormulario({ descricao: "", valor: "", dataDespesa: hojeCivil(), categoria: "fornecedores" }); await aoSalvar();
   } catch (falha) { toast.error(falha instanceof Error ? falha.message : "Falha ao lançar despesa."); } finally { setSalvando(false); } };
-  return <Dialog open={open} onOpenChange={abrir}><DialogTrigger disabled={!lojas.length} className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"><Plus className="size-4" /> Nova despesa</DialogTrigger>
+  return <Dialog open={open} onOpenChange={abrir}><DialogTrigger disabled={!loja} title={loja ? undefined : "Selecione uma loja no cabeçalho"} className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"><Plus className="size-4" /> Nova despesa</DialogTrigger>
     <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Lançar despesa</DialogTitle></DialogHeader><div className="grid gap-3"><Field label="Descrição"><input className={fieldCls} maxLength={200} value={formulario.descricao} onChange={(e) => setFormulario({ ...formulario, descricao: e.target.value })} /></Field>
       <div className="grid gap-3 sm:grid-cols-2"><Field label="Valor (R$)"><input className={fieldCls} inputMode="decimal" placeholder="0,00" value={formulario.valor} onChange={(e) => setFormulario({ ...formulario, valor: e.target.value })} /></Field>
         <Field label="Data"><input type="date" className={fieldCls} value={formulario.dataDespesa} onChange={(e) => setFormulario({ ...formulario, dataDespesa: e.target.value })} /></Field>
         <Field label="Categoria"><select className={fieldCls} value={formulario.categoria} onChange={(e) => setFormulario({ ...formulario, categoria: e.target.value as Categoria })}>{CATEGORIAS.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></Field>
-        <Field label="Loja"><select className={fieldCls} value={formulario.lojaId} onChange={(e) => setFormulario({ ...formulario, lojaId: e.target.value })}>{lojas.map((loja) => <option key={loja.id} value={loja.id}>{loja.nome}</option>)}</select></Field></div></div>
-      <DialogFooter><button type="button" disabled={salvando || !formulario.lojaId} onClick={() => void salvar()} className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50">{salvando && <LoaderCircle className="size-4 animate-spin" />}{salvando ? "Salvando…" : "Lançar despesa"}</button></DialogFooter>
+        <Field label="Loja"><div className={`${fieldCls} flex items-center bg-secondary/50`}>{loja?.nome ?? "Selecione no cabeçalho"}</div></Field></div></div>
+      <DialogFooter><button type="button" disabled={salvando || !loja} onClick={() => void salvar()} className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50">{salvando && <LoaderCircle className="size-4 animate-spin" />}{salvando ? "Salvando…" : "Lançar despesa"}</button></DialogFooter>
     </DialogContent></Dialog>;
 }

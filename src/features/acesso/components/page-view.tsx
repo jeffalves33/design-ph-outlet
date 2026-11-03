@@ -71,10 +71,10 @@ export default function Login() {
 
         <div className="relative my-auto max-w-lg py-16">
           <h1 className="mt-6 font-display text-4xl leading-tight font-semibold tracking-tight xl:text-5xl">
-            Duas lojas. Uma gestão.
+            PH Outlet
           </h1>
           <p className="mt-5 max-w-md text-sm leading-6 text-sidebar-foreground/60">
-            Estoque, vendas, clientes e equipe organizados em um único lugar.
+            by Prodexy Labs.
           </p>
         </div>
 

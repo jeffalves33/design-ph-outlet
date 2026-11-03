@@ -33,3 +33,28 @@ Pool ID, issuer e Client ID são **configuração não secreta**. Convenção de
 CloudShell do responsável criou o cliente após confirmar nome/tier do pool, MFA OPTIONAL e ausência de cliente homônimo. `describe-user-pool-client` confirmou nome, IDs, fluxos e controles acima. Fontes canônicas: `D:\Prodexy\docs\platform\aws\RESOURCE_REGISTRY.md` (recurso) e `D:\Prodexy\docs\platform\aws\BUILD_LEDGER.md` (execução). Nenhum usuário foi criado nesta operação; a contagem atual de usuários não foi reconsultada. Não houve teste de login, recuperação, email, MFA, Vercel ou aplicação PH.
 
 Gate cumprido: o responsável validou este handoff e autorizou **somente a retomada de P2.5** pelo executor em 2026-10-16. Ao entregar P2.5, o executor atualiza os checks, apresenta evidências e para; P2.6 exige novo aceite.
+
+## Extensão administrativa — gestão de funcionários P6.5
+
+Status: **HANDOFF CONCLUÍDO E LIBERADO PELO RESPONSÁVEL EM 2026-11-03**. O registro abaixo preserva a solicitação original e a devolução não secreta. Esta liberação autoriza somente o restante de P6.5; não autoriza chamadas de homologação remota pelo executor, P7 ou deploy.
+
+Solicitação ao Platform Agent, após autorização do responsável:
+
+- conceder ao runtime server-side do PH, limitado ao User Pool `prodexy-prod-dedicated-users`, somente `cognito-idp:AdminCreateUser`, `AdminGetUser`, `AdminUpdateUserAttributes`, `AdminEnableUser`, `AdminDisableUser`, `AdminUserGlobalSignOut` e `AdminDeleteUser`;
+- `AdminDeleteUser` será usado exclusivamente como compensação quando uma conta recém-criada ainda não tiver perfil local confirmado; usuários já consolidados serão bloqueados, nunca apagados pelo fluxo normal;
+- manter cadastro público desabilitado e convite/senha temporária gerados pelo Cognito; senha humana nunca passa pelo banco PH, logs ou interface administrativa;
+- fornecer ao runtime Vercel uma identidade AWS server-side de menor privilégio conforme o padrão da plataforma, sem `NEXT_PUBLIC_*` e sem valor de segredo neste repositório;
+- registrar recurso/política no registry antes do ledger e devolver evidência não secreta do escopo, principal e ações permitidas;
+- não alterar App Client, MFA, validade de refresh, domínio, OAuth ou outros projetos do pool.
+
+Devolução informada pelo responsável:
+
+- principal server-side: IAM User `prodexy-prod-ph-outlet-cognito-admin`, ARN `arn:aws:iam::130854680883:user/prodexy-prod-ph-outlet-cognito-admin`;
+- escopo único: User Pool `us-east-1_Jm4EQEGdZ`, região `us-east-1`;
+- ações: `AdminCreateUser`, `AdminGetUser`, `AdminUpdateUserAttributes`, `AdminEnableUser`, `AdminDisableUser`, `AdminUserGlobalSignOut` e `AdminDeleteUser`;
+- `AdminDeleteUser` permanece restrito à compensação de conta recém-criada cujo cadastro local não concluiu;
+- `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY` foram configuradas privadamente pelo responsável na Vercel. O executor não leu, exibiu ou validou valores;
+- a aplicação usa a cadeia padrão de credenciais server-side do AWS SDK, sem `NEXT_PUBLIC_*` e sem credenciais explícitas no código;
+- a migration `202611030001_notificacoes_funcionarios.sql` já foi aplicada e conferida pelo responsável.
+
+Com o handoff, o executor está autorizado a implementar criação idempotente, vínculo local às lojas, edição de nome/e-mail, bloqueio com revogação das sessões, ativação e reenvio controlado de convite. Testes locais devem simular o provider; nenhuma conta real deve ser criada durante esta entrega.

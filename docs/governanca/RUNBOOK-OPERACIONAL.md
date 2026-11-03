@@ -1,6 +1,6 @@
 # Runbook de construção e operação — PH Outlet
 
-Status: construção local concluída e validada até P6.4 em 2026-11-03, com cinco migrations até P5.2 aplicadas manualmente e conciliadas por evidência. P7 está adiado, não iniciado e sem autorização. Backup, teste de restauração, configuração final de produção, Vercel, Cognito, domínio, deploy e homologação pós-deploy não devem ser executados agora. As pendências abaixo permanecem documentadas somente para um release futuro solicitado expressamente; não são bloqueio nem trabalho atual. Nenhum comando aqui deve carregar ou imprimir arquivos privados.
+Status: construção validada até P6.4. P6.5 está integralmente implementado e validado localmente; a migration `202611030001_notificacoes_funcionarios.sql` foi aplicada manualmente com pós-check informado pelo responsável e o handoff Cognito administrativo foi registrado em 2026-11-03. P6.5 aguarda aceite; P7 continua adiado e não iniciado. Nenhum comando aqui deve carregar ou imprimir arquivos privados.
 
 ## Banco
 
@@ -20,6 +20,8 @@ Database, role runtime, HBA e limite de conexões P2.2 existem; identificadores 
 
 Variáveis Auth não secretas do runtime server-side: `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_ISSUER`, conforme [HANDOFF-AUTH](../planejamento/HANDOFF-AUTH.md). O responsável as configura privadamente na Vercel; não foram criadas neste bloco. O App Client PH não tem client secret. Access token fica apenas em cookie HttpOnly. A correção local de P2.5 mantém o refresh token cifrado/autenticado em cookie HttpOnly, SameSite strict e Secure em produção; renovação usa somente o servidor, reconfere token, GetUser e vínculo PH ativo, e não estende o vencimento original do refresh. Saída revoga no Cognito e limpa cookies; falha de revogação remota é indicada, não declarada como sucesso.
 
+Para a gestão de funcionários P6.5, o responsável informou que a identidade AWS administrativa de menor privilégio e suas variáveis padrão foram configuradas privadamente na Vercel. O SDK usa a cadeia padrão server-side; o código não lê nomes de credencial diretamente nem aceita credenciais do navegador. Novos perfis são sempre vendedores. Criação Cognito só é confirmada depois do perfil/vínculos locais; `AdminDeleteUser` é reservado à compensação imediata dessa criação incompleta. Bloqueio marca primeiro o perfil local como inativo, depois desabilita a conta e revoga sessões no Cognito. Se a revogação remota falhar, o acesso PH continua negado pelo vínculo local e a interface informa que a operação remota precisa ser repetida; não apagar o usuário local.
+
 `PH_SESSION_ENCRYPTION_KEY` é segredo novo de aplicação: 32 bytes aleatórios codificados em base64, gerado e preenchido privadamente pelo responsável somente no runtime server-side Vercel, nunca em `NEXT_PUBLIC_*`, navegador, documentação ou logs. Sem chave válida, login/renovação falham fechados. A rotação dessa chave invalida as sessões já abertas; planejar a janela de rotação antes da publicação. Conforme confirmação do responsável, o Platform Agent alterou o App Client PH para 3.650 dias de validade do refresh token e registrou no registry e ledger. Para novas credenciais, o código guarda esse vencimento absoluto no cookie cifrado e emite o cookie por até 400 dias a cada vez no Chrome, limitado pelo tempo restante da credencial. A janela é renovada durante o uso (GET de sessão, navegação de renovação, checagem de 12 em 12 horas e retorno à aba), sem reiniciar o vencimento original. Ausência superior ao prazo efetivo permitido pelo navegador, limites adicionais ou token antigo emitido sob prazo anterior podem exigir novo login; não declarar sessão infinita ou garantida por 3.650 dias. Homologação real de login, expiração, renovação, MFA, recuperação e revogação permanece obrigatória antes de deploy, mas ambiente/conta de teste não estão autorizados agora. Preview/teste não recebem acesso ou credencial de produção por conveniência. Identidade de migration nunca é a credencial de runtime.
 
 No banco: role mínima, grants somente necessários, restrições de PUBLIC e HBA para par explícito antes do reject; aplicação não executa DDL. Cognito compartilhado não autoriza automaticamente usuário de outro projeto. Testar vínculo ativo, isolamento de loja e vendedor. Não alterar SG global neste onboarding sem necessidade aprovada; D3 já é baseline.
@@ -34,7 +36,7 @@ Evidências: commit, ambiente lógico, comando sem segredo, retorno, cenários/c
 
 ### Conciliação P6.4 e pendências concretas
 
-O histórico local contém exatamente cinco migrations aplicadas, sem arquivo pendente: `202610140001_inicial` (`7592e400…a8e09`), `202610240001_cadastro_inicial` (`74eeed07…5aacf`), `202610240002_tamanho_categoria` (`7d073565…e80a8`), `202610250001_metas` (`03739587…015f2`) e `202610260001_clientes_financeiro` (`bec90929…7a07e`). Os hashes integrais permanecem nas seções históricas acima e são verificados por teste. O estado acumulado corresponde ao `database/schema.sql`: 15 tabelas, 16 índices, evoluções de tamanho e cliente, e grants mínimos. Esta conclusão combina artefatos locais com os pós-checks apresentados pelo responsável; o executor não fez nova consulta ao database PH e não executou replay.
+O histórico local contém seis migrations aplicadas, sem arquivo pendente: as cinco conciliadas em P6.4 e `202611030001_notificacoes_funcionarios` (hash de ledger `6454b716…08d482`). O estado acumulado corresponde ao `database/schema.sql`: 16 tabelas, 18 índices, coluna de e-mail de usuário, leituras de notificação e grants mínimos. Esta conclusão combina artefatos locais com os pós-checks informados pelo responsável; o executor não fez nova consulta ao database PH e não executou replay.
 
 Quando o responsável solicitar futuramente o release, deverão ser retomadas as pendências abaixo, sem ocultá-las ou convertê-las em “feito”. Elas não são bloqueio nem trabalho atual:
 
@@ -49,7 +51,60 @@ P1.4 e P2.3 continuam sem aceite formal retroativo no checklist histórico, embo
 
 ### Padrão atual de migrations — SQL Editor
 
+#### Migration aplicada — notificações e funcionários
+
+Aplicada manualmente e pós-check informado pelo responsável em 2026-11-03. O procedimento abaixo permanece somente como registro; **não copiar, executar ou reaplicar** esta migration.
+
+- Arquivo: `database/migrations/202611030001_notificacoes_funcionarios.sql`.
+- Database alvo: `prodexy_ph_outlet`.
+- Hash canônico registrado no ledger: `6454b71652a75c7c44f165a6c0fc2ef8fbd38aff4a8a4b2830d326acda08d482`.
+- Impacto: lock curto em `public.usuarios` para adicionar coluna nullable; criação de uma tabela e dois índices. Não cria usuário Cognito, role, secret ou infraestrutura.
+- Aplicação: no Prodexy Sistema, abrir `/infraestrutura/sql`, selecionar PH Outlet, copiar o conteúdo integral do arquivo e executar uma única vez. O hash já está literal no SQL; não informar parâmetros. Parar no primeiro erro e não reaplicar após `COMMIT`.
+- Recuperação: antes do `COMMIT`, qualquer erro reverte a transação. Depois do `COMMIT`, não remover coluna/tabela nem restaurar sobre produção; registrar a saída e preparar migration corretiva.
+
+Pré-check no mesmo database:
+
+```sql
+SELECT current_database() AS banco,
+       to_regclass('public.notificacoes_lidas') AS notificacoes_existente,
+       EXISTS (
+         SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'email'
+       ) AS email_existente,
+       EXISTS (
+         SELECT 1 FROM public.migracoes_schema
+          WHERE versao = '202610260001_clientes_financeiro'
+       ) AS anterior_aplicada,
+       EXISTS (
+         SELECT 1 FROM public.migracoes_schema
+          WHERE versao = '202611030001_notificacoes_funcionarios'
+       ) AS nova_aplicada;
+```
+
+Esperado antes: banco `prodexy_ph_outlet`, notificações e e-mail ausentes, `anterior_aplicada=true`, `nova_aplicada=false`.
+
+Pós-check:
+
+```sql
+SELECT versao, hash_sha256
+  FROM public.migracoes_schema
+ WHERE versao = '202611030001_notificacoes_funcionarios';
+
+SELECT column_name, is_nullable
+  FROM information_schema.columns
+ WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'email';
+
+SELECT to_regclass('public.notificacoes_lidas') AS notificacoes_lidas,
+       has_table_privilege('prodexy_ph_outlet_app', 'public.notificacoes_lidas', 'SELECT') AS consulta,
+       has_table_privilege('prodexy_ph_outlet_app', 'public.notificacoes_lidas', 'INSERT') AS inclusao,
+       has_table_privilege('prodexy_ph_outlet_app', 'public.notificacoes_lidas', 'UPDATE') AS alteracao;
+```
+
+Esperado depois: versão/hash exatos, coluna `email` nullable, tabela existente e três privilégios verdadeiros. Enviar somente essa evidência não secreta ao executor.
+
 Para toda migration nova:
+
+0. entregar SQL PostgreSQL autossuficiente para o SQL Editor: valores do ledger e demais constantes devem estar literais no arquivo; são proibidos `:'hash_migracao'`, `:variavel`, `\set`, `-v` ou qualquer dependência do terminal `psql`;
 
 1. abrir o arquivo indicado em `database/migrations` e copiar seu conteúdo integral;
 2. abrir `/infraestrutura/sql` no Prodexy Sistema;

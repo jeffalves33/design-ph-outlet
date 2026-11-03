@@ -46,7 +46,9 @@ test("painel, estoque, seletor e alertas usam APIs reais e lojas do backend", ()
   assert.match(painel, /\/api\/catalogo/);
   assert.match(painel, /\/api\/clientes/);
   assert.match(shell, /dadosCatalogo\.lojas/);
-  assert.match(shell, /Dados atuais do catálogo e CRM/);
+  assert.match(shell, /\/api\/notificacoes/);
+  assert.match(shell, /Marcar todas como lidas/);
+  assert.match(shell, /Leituras salvas por usuário/);
   assert.match(estoque, /catalogo-view/);
 });
 
